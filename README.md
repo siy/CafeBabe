@@ -1,6 +1,5 @@
-## Examples
+## Syntax Examples
 
-### Function definition and lambda definition
 ### Plain Functions
 ```java
 //all types explicit
@@ -21,16 +20,14 @@ fn makeString(int a, int b) {
 ```
 
 ### Generic Functions
-
 ```java
 <R> R add(R a, R b) = a + b; //fully type annotated
 fn add(a, b) = a + b; //all types inferred
 <R:Number> R add(R a, R b) = a + b; //type bounds, all types explicit 
-<R:Number> R add(a, b) = a + b; //type bounds, return type explicit, rest is inferred 
 ```
 
 ### Lambdas
-```
+```java
 int (int a, int b) = a + b  // explicit argument types and return type
 (a, b) = a + b              // all types inferred
 int (a, b) = a + b          // return type explicit, rest inferred
@@ -38,9 +35,11 @@ a, b = a + b                // without parentheses, accepted in limited context 
 ```
 
 ### Tuples
+```java
 () // empty tuple, unit
 (a) // tuple with one element
 (a, b) // tuple with two elements
+```
 
 ### Type declarations
 ```java
@@ -58,10 +57,10 @@ type Mapper<T,R> = T -> R;  // function type
 type FlatMapper<T,R> = T -> Result<R>;  // another function type
 
 //Result is one of two types, both types implement same API
-type Result<T> = (Success<T> | Failure) : { 
-    <R> Result<R> map(Mapper<T,R>);
-    <R> Result<R> flatMap(FlatMapper<T,R>);
-};
+type Result<T> = Success<T> | Failure { 
+    <R> Result<R> map(Mapper<T,R> mapper);
+    <R> Result<R> flatMap(FlatMapper<T,R> mapper);
+}
 
 type Success<T> = class (T value) { //automatically generated constructor
     // explicit types
@@ -90,9 +89,9 @@ type FlatMapper<T,R> = T -> Result<R>;  // another function type
 
 //Result is one of two types, both types implement same API
 //Referenced types implementation must be provided inside
-type Result<T> = (Success<T> | Failure) { 
-    <R> Result<R> map(Mapper<T,R>);
-    <R> Result<R> flatMap(FlatMapper<T,R>);
+type Result<T> = Success<T> | Failure { 
+    <R> Result<R> map(Mapper<T,R> mapper);
+    <R> Result<R> flatMap(FlatMapper<T,R> mapper);
 
     class Success<T> (T value) {
         impl map(mapper) = Success(mapper(value));
@@ -104,35 +103,18 @@ type Result<T> = (Success<T> | Failure) {
         impl flatMap(_) = this;
     }
 };
---------------------------------------------------
-//Version 3
-type Mapper<T,R> = fn R(T); 
-
-type Monad<T> = api {
-    <R> Monad<R> map(Mapper<T,R>);
-    // * == "extends"
-    <R> *Monad<R> flatMap(Mapper<T, *Monad<R>>);
-}
-
-type Result<T> = (Success<T> | Failure) : Monad<T> { 
-    type Success<T> = class(T value) {
-        impl map(mapper) = Success(mapper(value));
-        impl flatMap(mapper) = mapper(value);
-    }
-
-    type Failure = class() {
-        impl map(_) = this;
-        impl flatMap(_) = this;
-    }
-};
---------------------------------------------------
-
 //Enum
 type Color = Red | Green | Blue;
 ```
 
 ### Sequences
-
+```java
+fn loopDemo() {
+    for(int i : [1..100, 2]) { // from 1 to 100 by 2
+        Console.out("Sequence ${i}");
+    }
+}
+```
 
 ### Variadic Templates
 4 types of fold expansion:
@@ -141,31 +123,28 @@ type Color = Red | Green | Blue;
  - ( ... op E ) unary left fold -> (((E1 op E2) op ...) op EN)
  - ( E op ... op I ) binary right fold -> (E1 op (... op (EN−1 op (EN op I))))
  - ( I op ... op E ) binary left fold -> ((((I op E1) op E2) op ...) op EN)
-
  
 ```java
 // Function with variable number of parameters (fixed at compile time)
-type FN<R, T...> = T..., -> R;
+type FN<R, T, ...> = T ->... R;
 
 // Tuple with variable number of components
-type Tuple<T...> = class (T value...) {
-    R map(FN<R, T...> mapper) = mapper(value,...);
+type Tuple<T, ...> = class (T value, ...) {
+    R map(FN<R, T, ...> mapper) = mapper(value, ...);
+    R map(FN<R, T, ...> mapper) = (value, ...);
 }
 
-Mapper<T...> allOf(final Result<T> value, ...) {
+Mapper<T, ...> allOf(Result<T> value, ...) {
     // Binary right fold expansion with nestes unary right fold expansion
     // value1.flatMap(vv1 ->  
     //  value2.flatMap(vv2 ->
     //   ...
     //    valueN.flatMap(vvN ->
     //     ok(tuple(vv1, vv2, ..., vvN))..);
-    return () -> { return value.flatMap(vv ->... ok(tuple(vv,...))); };
+
+    return () -> { return value.flatMap(vv ->... ok(tuple(vv, ...))); };
 }
-
-
 ```
-
-## Grammar Examples
 
 ### Imports
 ```java
