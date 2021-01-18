@@ -27,7 +27,7 @@ CommonApiBody <- BlockStart MethodDecl* (StaticMethodImpl / NamedClassDecl / Con
 MethodDecl <- MethodSignature Semicolon
 
 MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
-TypedFunction <- TypeName Name '(' TypedArgList? ')'
+TypedFunction <- TypeName Name '(' TypedArgList? ')' 
 UntypedFunction <- _ 'fn' Name '(' NameList? ')'
 
 ClassDecl <- _ 'class' ClassBody
@@ -79,12 +79,12 @@ Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpress
 IfExpression <- _ 'if' _ NestedExpr MethodBlockBody (_ 'else' MethodBlockBody)?
 SelectExpression <- _ 'select' NestedExpr BlockStart SelectCase* Default? BlockEnd
 MatchExpression <- _ 'match' NestedExpr BlockStart MatchCase* Default? BlockEnd
-TernaryExpression <- _ NestedExpr _ '?' Expr _ ':' Expr
+TernaryExpression <- _ NestedExpr _ '?' Expression _ ':' Expression
 
 #TODO: might be incorrect
-SelectCase <- _ 'case' CaseExpr Arrow Expr Semicolon
-MatchCase <- _  TypeName Arrow Expr Semicolon
-Default <- _ 'default' Arrow Expr Semicolon
+SelectCase <- _ 'case' CaseExpr Arrow Expression Semicolon
+MatchCase <- _  TypeName Arrow Expression Semicolon
+Default <- _ 'default' Arrow Expression Semicolon
 CaseExpr <- (NumLiteral / StringLiteral / Iterable / ObjConstruction)
 
 Expr <- Or (LogicalOr Or)*
@@ -105,12 +105,13 @@ Cast <- _ '(' TypeName ')'
 
 Value <- LiteralValue Call?
 LiteralValue <- NumLiteral / StringLiteral / Iterable / ObjConstruction / TupleConstruction / Lambda / (Name !Ellipsis)
-Call <- (MethodReference / MethodCall / CallParameters / Name)*
+Call <- (MethodReference / MethodCall / CallParameters / Name / Index)*
+Index <- _ '[' Expression ']'
 MethodReference <- _ '::' Name
 MethodCall <- _ '.' _ Call
 Lambda <- (TypeName? CallParameters / Name) Arrow Ellipsis? (Expression / MethodBlockBody)
-NestedExpr <- _ '(' Expr ')'
-ObjConstruction <- _ TypeName? BlockStart (Expr BitOr)? AssignmentExpr (',' AssignmentExpr)* BlockEnd
+NestedExpr <- _ '(' Expression ')' 
+ObjConstruction <- _ TypeName? BlockStart (Expression BitOr)? AssignmentExpr (',' AssignmentExpr)* BlockEnd
 SumOps <-  _ < ('+'/'-') >
 MulOps <-  _ < ('*' / '/' / '%') >
 UnaryOps <-  _ < ('-' / '+' / '--' / '++' / '!' / '~') >
@@ -123,9 +124,9 @@ ShiftOps <-  _ < ('<<' / '>>' / '>>>') >
 #TODO: incomplete
 Iterable <- _ '[' (Range / Comprehension) ']' _
 Range <- NumLiteral '..' NumLiteral (Comma NumLiteral)?
-Comprehension <-
+Comprehension <- 
 
-CallParameters <- _ '(' (Expr (Comma Expr)* (Comma Ellipsis)?)? ')'
+CallParameters <- _ '(' (Expression (Comma Expression)* (Comma Ellipsis)?)? ')'
 
 BlockStart <- _ '{' _
 BlockEnd <- _ '}' _
