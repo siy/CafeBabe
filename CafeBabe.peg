@@ -62,8 +62,9 @@ ForStatement <- _ 'for' _ '(' VarTitle Name ':' Expression ')' MethodBlockBody
 ReturnStatement <- _ 'return' Expression? Semicolon
 IterableStatement <- _ Iterable MethodCall? Semicolon
 
-TypeName <- Name TypeArguments? ReferenceDecl?
+TypeName <- Name TypeArguments? ReferenceDecl? ArrayDecl*
 ReferenceDecl <- _ '&' _
+ArrayDecl <- _ '[' _ ']' _
 TypeArguments <- _ '<' TypeNameList (Comma Ellipsis)? '>' _
 TypeVarsDecl <- _ '<' LimitedTypeName (Comma LimitedTypeName)* '>' _
 LimitedTypeName <- Name (_ ':' TypeName)?
@@ -104,14 +105,15 @@ UnaryValue <-  ( Value / NestedExpr / Ellipsis) PostfixOps?
 Cast <- _ '(' TypeName ')'
 
 Value <- LiteralValue Call?
-LiteralValue <- NumLiteral / StringLiteral / Iterable / ObjConstruction / TupleConstruction / Lambda / (Name !Ellipsis)
+LiteralValue <- NumLiteral / StringLiteral / Iterable / ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / (Name !Ellipsis)
 Call <- (MethodReference / MethodCall / CallParameters / Name / Index)*
 Index <- _ '[' Expression ']'
 MethodReference <- _ '::' Name
 MethodCall <- _ '.' _ Call
 Lambda <- (TypeName? CallParameters / Name) Arrow Ellipsis? (Expression / MethodBlockBody)
 NestedExpr <- _ '(' Expression ')' 
-ObjConstruction <- _ TypeName? BlockStart (Expression BitOr)? AssignmentExpr (',' AssignmentExpr)* BlockEnd
+ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (',' AssignmentExpr)* BlockEnd
+ArrayConstruction <- _ '[' (Expression (Comma Expression)*)? ']' _
 SumOps <-  _ < ('+'/'-') >
 MulOps <-  _ < ('*' / '/' / '%') >
 UnaryOps <-  _ < ('-' / '+' / '--' / '++' / '!' / '~') >
