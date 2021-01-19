@@ -7,12 +7,15 @@ Unsafe <- _ 'unsafe' BlockStart (Type/Function)* BlockEnd
 
 Extension <- _ 'extend' TypeName ApiRefs? ClassBlock
 
-Type <- _ 'type' TypeName '=' (ApiDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
-Function <- MethodSignature MethodBody
-
+Type <- AnnotationRef* _ 'type' TypeName '=' (ApiDecl / AnnotationDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
+Function <- AnnotationRef* MethodSignature MethodBody
+AnnotationRef <- _ '@' _ Name ('(' Expression? (Comma Expression)* ')' _)?
 TupleDecl <- _ '(' TypeName? (Comma TypeName)* (Comma Ellipsis)? ')' Semicolon
 ApiDecl <- _ 'api' CommonApiBody
 TypeAliasDecl <- ArgumentType Semicolon
+
+# Compile-time processing of the annotated code
+AnnotationDecl <- _ ( 'type' / 'fn') _ 'annotation' DataDecl BlockStart Statement* BlockEnd
 
 CompoundTypeDecl <- TypeName ( AndType / OrType)? (Semicolon / CommonApiDecl)
 AndType <- (Comma TypeName)+
@@ -137,7 +140,7 @@ BlockStart <- _ '{' _
 BlockEnd <- _ '}' _
 NumLiteral <- _ < [0-9_]+ ('.'[0-9_]+)?NumSuffix? > _
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
-Name <- _ < [_$a-zA-Z] [_$a-zA-Z0-9]* > _
+Name <- _ < [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
 StringLiteral <- _ < ["] < (!["] .)* > ["] >
 Semicolon <- _ ';'_
 Ellipsis <- _ '...' _
