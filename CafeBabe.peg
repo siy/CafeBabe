@@ -28,8 +28,8 @@ MethodDecl <- MethodSignature Semicolon
 
 MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
 TypedFunction <- TypeName Name '(' TypedArgList? ')' 
-UntypedFunction <- _ 'fn' Name '(' NameList? ')'
-
+UntypedFunction <- _ 'fn' Name OptionalNameList
+OptionalNameList <- _ '(' NameList? ')'
 ClassDecl <- _ 'class' ClassBody
 
 NamedClassDecl <- _ 'class' TypeName ClassBody
@@ -43,7 +43,7 @@ Constant <- _ 'const' VariableDeclaration
 
 StaticMethodImpl <- _ 'static' MethodSignature MethodBody
 
-MethodImpl <- _ 'impl' Name '(' NameList? ')' MethodBody
+MethodImpl <- _ 'impl' Name OptionalNameList MethodBody
 MethodBody <- MethodExpression / MethodBlockBody
 MethodExpression <- _ '=' Expression Semicolon
 
@@ -55,9 +55,9 @@ VarTitle <- 'val' / 'var' / TypeName
 Assignment <- AssignmentExpr Semicolon
 AssignmentExpr <-  RegularAssignment / ParallelAssignment
 RegularAssignment <- Name AssignOps Expression
-ParallelAssignment <- _ '(' NameList ')' _ '=' (TupleConstruction / Expression)
+ParallelAssignment <- _ RequiredNameList _ '=' (TupleConstruction / Expression)
 TupleConstruction <- _ '(' Expression? (Comma Expression)*  (Comma Ellipsis)? ')' _
-
+RequiredNameList <- '(' NameList ')'
 ForStatement <- _ 'for' _ '(' VarTitle Name ':' Expression ')' MethodBlockBody
 ReturnStatement <- _ 'return' Expression? Semicolon
 IterableStatement <- _ Iterable MethodCall? Semicolon
@@ -75,12 +75,14 @@ ArgumentType <- TypeName (Arrow Ellipsis? TypeName)*
 
 NameList <- Name (Comma Name)*
 
-Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / Expr
+Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / BreakExpr / ContinueExpr / Expr
 
 IfExpression <- _ 'if' _ NestedExpr MethodBlockBody (_ 'else' MethodBlockBody)?
 SelectExpression <- _ 'select' NestedExpr BlockStart SelectCase* Default? BlockEnd
 MatchExpression <- _ 'match' NestedExpr BlockStart MatchCase* Default? BlockEnd
 TernaryExpression <- _ NestedExpr _ '?' Expression _ ':' Expression
+BreakExpr <- _ 'break' _
+ContinueExpr <- _ 'continue' _
 
 #TODO: might be incorrect
 SelectCase <- _ 'case' CaseExpr Arrow Expression Semicolon
@@ -109,7 +111,7 @@ LiteralValue <- NumLiteral / StringLiteral / Iterable / ObjConstruction / ArrayC
 Call <- (MethodReference / MethodCall / CallParameters / Name / Index)*
 Index <- _ '[' Expression ']'
 MethodReference <- _ '::' Name
-MethodCall <- _ '.' _ Call
+MethodCall <- _ '.' _ Name Call
 Lambda <- (TypeName? CallParameters / Name) Arrow Ellipsis? (Expression / MethodBlockBody)
 NestedExpr <- _ '(' Expression ')' 
 ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (',' AssignmentExpr)* BlockEnd
@@ -123,13 +125,14 @@ EqualityOps <- _ < ('==' / '!=') >
 CompareOps <- _ < ('<=' / '>=' / '<' / '>' / 'isA') >
 ShiftOps <-  _ < ('<<' / '>>' / '>>>') >
 
-#TODO: incomplete
-Iterable <- _ '[' (Range / Comprehension) ']' _
-Range <- NumLiteral '..' NumLiteral (Comma NumLiteral)?
-Comprehension <- 
-
+Iterable <- Range / Comprehension
+Range <- _ '[' NumLiteral '..' NumLiteral (Comma NumLiteral)? ']'
+OpenRange <- _ '[' NumLiteral '..' (NumLiteral (Comma NumLiteral)?)? ']'
+Comprehension <- _ '[' Expr BitOr Name LeftArrow OpenRange (ProductCompr / ParallelCompr) (OutputCondition)?']'
+ProductCompr <- (Comma Name LeftArrow OpenRange)*
+ParallelCompr <- (BitOr Name LeftArrow OpenRange)*
+OutputCondition <- Comma Expression
 CallParameters <- _ '(' (Expression (Comma Expression)* (Comma Ellipsis)?)? ')'
-
 BlockStart <- _ '{' _
 BlockEnd <- _ '}' _
 NumLiteral <- _ < [0-9_]+ ('.'[0-9_]+)?NumSuffix? > _
@@ -139,6 +142,7 @@ StringLiteral <- _ < ["] < (!["] .)* > ["] >
 Semicolon <- _ ';'_
 Ellipsis <- _ '...' _
 Arrow <- _ '->' _
+LeftArrow <- _ '<-' _
 LogicalAnd <- _ '&&' _
 LogicalOr <- _ '||' _
 BitAnd <- _ '&' _
