@@ -1,3 +1,74 @@
+# CafeBabe Programming Language
+
+The CafeBabe is an attempt to design modern language for implementation of backend applications.
+
+## Motivation
+There are a plenty of languages suitable for backend development, but none of them combines all properties 
+I need:
+ - Readable code suitable for long term development and maintenance
+ - Support for FP (Functional Programming) and OOP (Object-Oriented Programming)
+ - Expressive yet concise
+ - Suitable for both, low level and high level code without need to use other language
+ - Reasonably extensible
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Syntax Examples
 
 ### Plain Functions
