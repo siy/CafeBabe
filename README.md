@@ -38,7 +38,7 @@ Elegant and clean syntax for manipulation of immutable classes borrowed almost u
 
 The CafeBabe is a statically typed, hybrid FP/OOP language compiled into native code.
 Below listed some key features:
- - 
+ - Compact, regular C-style syntax. Whole grammar less than 200 rules.
  - 
 
 ### Code Organization
