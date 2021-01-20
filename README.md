@@ -7,13 +7,57 @@ There are a plenty of languages suitable for backend development, but none of th
 I need:
  - Readable code suitable for long term development and maintenance
  - Support for FP (Functional Programming) and OOP (Object-Oriented Programming)
- - Expressive yet concise
+ - Simple regular syntax, expressive and consistent
  - Suitable for both, low level and high level code without need to use other language
- - Reasonably extensible
+ - Extensible with built-in tools
+ - Fast yet safe memory management
+ - Resource consumption dictated by application, not platform/VM application is running on
+ - Convenient for developer (compilation speed, etc.)
+
+## Inspirations
  
+### Java
+Over the years Java proved that it is very good for enterprise development. CafeBabe 
+inherited very little from Java syntax, but enterprise focus is definitely inherited from Java.
 
+### C++
+Variadic templates and fold expansion are inspired by C++ (C++11 and C++17).
 
+### Rust
+The approach to memory and resource management is ispired by Rust. I believe that Rust approach to resource
+management is an elegant solution for one of the most complex problems in programming.
 
+### Haskell
+The Haskell is a main source of inspiration for FP features. Main one - understanding that crating types must
+be as simple and convenient as possible.
+
+### Elm
+Elegant and clean syntax for manipulation of immutable classes borrowed almost unchanged from Elm.
+
+## Features
+
+The CafeBabe is a statically typed, hybrid FP/OOP language compiled into native code.
+Below listed some key features:
+ - 
+ - 
+
+### Code Organization
+The application consists of one or more source files. Source files are organized in the source tree 
+according to package structure.
+
+Each source file (compilation unit) has fixed structure:
+
+ - Imports
+ - Constant declarations
+ - Type declarations
+ - Extensions 
+ - Functions
+ - Unsafe code
+
+Any of the above parts might be missing, but structure of the compilation unit follows this pattern.
+Main reason to introduction of such a structure - make getting into new code base as simple as possible.
+
+### 
 
 
 

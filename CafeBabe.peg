@@ -1,15 +1,20 @@
-Program <- Uses (Type/Function/Constant/Unsafe/Extension)*
-Uses <- Use*
-Use <- _ 'use' PackageName Semicolon
+Program <- Use* Constant* Type* Extension* Function* Unsafe*
+
+Use <- _ 'use' PackageName ImportList? Semicolon
+Constant <- AccessModifier? _ 'const' ('val' / TypeName) Name _ '=' Expression Semicolon
+Type <- AnnotationRef* AccessModifier? _ 'type' TypeName '=' (ApiDecl / AnnotationDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
+Extension <- AccessModifier? _ 'extend' TypeName ApiRefs? ClassBlock
+Function <- AnnotationRef* AccessModifier? MethodSignature MethodBody
+Unsafe <- _ 'unsafe' BlockStart Constant* Type* Function* BlockEnd
+
 PackageName <- Name ('.' Name )*
+ImportList <- _ BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
+NameWithAlias <- Name (_ 'as' Name)?
 
-Unsafe <- _ 'unsafe' BlockStart (Type/Function)* BlockEnd
+AccessModifier <- _ 'pub'
 
-Extension <- _ 'extend' TypeName ApiRefs? ClassBlock
-
-Type <- AnnotationRef* _ 'type' TypeName '=' (ApiDecl / AnnotationDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
-Function <- AnnotationRef* MethodSignature MethodBody
 AnnotationRef <- _ '@' _ Name ('(' Expression? (Comma Expression)* ')' _)?
+
 TupleDecl <- _ '(' TypeName? (Comma TypeName)* (Comma Ellipsis)? ')' Semicolon
 ApiDecl <- _ 'api' CommonApiBody
 TypeAliasDecl <- ArgumentType Semicolon
@@ -25,7 +30,7 @@ CommonApiDecl <- ApiRefs? CommonApiBody
 ApiRefs <- _ ':' CommonApiRefs
 
 CommonApiRefs <- TypeNameList
-CommonApiBody <- BlockStart MethodDecl* (StaticMethodImpl / NamedClassDecl / Constant)* BlockEnd
+CommonApiBody <- BlockStart Constant* MethodDecl* StaticMethodImpl* NamedClassDecl* BlockEnd
 
 MethodDecl <- MethodSignature Semicolon
 
@@ -35,16 +40,13 @@ UntypedFunction <- _ 'fn' Name OptionalNameList
 OptionalNameList <- _ '(' NameList? ')'
 ClassDecl <- _ 'class' ClassBody
 
-NamedClassDecl <- _ 'class' TypeName ClassBody
+NamedClassDecl <- AccessModifier? _ 'class' TypeName ClassBody
 ClassBody <- DataDecl? ApiRefs? ClassBlock
-ClassBlock <-  BlockStart Constant* (Function / MethodImpl)* BlockEnd
+ClassBlock <-  BlockStart Constant* StaticMethodImpl* NamedClassDecl* (Function / MethodImpl)* BlockEnd
 
 DataDecl <- _ '(' TypedArgList ')'
 
-#TODO: use of 'var' is allowed by grammar but should be denied by compiler
-Constant <- _ 'const' VariableDeclaration
-
-StaticMethodImpl <- _ 'static' MethodSignature MethodBody
+StaticMethodImpl <- AccessModifier? _ 'static' MethodSignature MethodBody
 
 MethodImpl <- _ 'impl' Name OptionalNameList MethodBody
 MethodBody <- MethodExpression / MethodBlockBody
@@ -87,7 +89,6 @@ TernaryExpression <- _ NestedExpr _ '?' Expression _ ':' Expression
 BreakExpr <- _ 'break' _
 ContinueExpr <- _ 'continue' _
 
-#TODO: might be incorrect
 SelectCase <- _ 'case' CaseExpr Arrow Expression Semicolon
 MatchCase <- _  TypeName Arrow Expression Semicolon
 Default <- _ 'default' Arrow Expression Semicolon
@@ -141,7 +142,8 @@ BlockEnd <- _ '}' _
 NumLiteral <- _ < [0-9_]+ ('.'[0-9_]+)?NumSuffix? > _
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 Name <- _ < [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
-StringLiteral <- _ < ["] < (!["] .)* > ["] >
+StringLiteral <- StringSegment (_ '++' StringSegment)*
+StringSegment <- _ < ["] < (!["] .)* > ["] >
 Semicolon <- _ ';'_
 Ellipsis <- _ '...' _
 Arrow <- _ '->' _

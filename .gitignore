@@ -51,3 +51,4 @@ CMakeCache.txt
 grammar/test/*
 cmake-build-debug/
 cmake-build-release/
+*.kate-swp
