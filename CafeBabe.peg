@@ -155,7 +155,7 @@ KW_var <- _ 'var'
 
 StringLiteral <- StringSegment (_ '++' StringSegment)*
 StringSegment <- _ < ["] < (!["] .)* > ["] >
-Semicolon <- _ ';'
+Semicolon <- _ ';' _
 Ellipsis <- _ '...' 
 Arrow <- _ '->' 
 LeftArrow <- _ '<-' 
@@ -165,8 +165,8 @@ BitAnd <- _ '&'
 BitOr <- _ '|' 
 BitXor <- _ '^' 
 Comma <- _ ',' 
-BlockStart <- _ '{' 
-BlockEnd <- _ '}' 
+BlockStart <- _ '{'  
+BlockEnd <- _ '}' _ 
 SequenceSign <- _ '..'
 LP <- _ '('
 RP <- _ ')'
