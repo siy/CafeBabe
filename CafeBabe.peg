@@ -1,13 +1,13 @@
 Program <- Use* Constant* Type* Extension* Function* Unsafe*
 
-Use <- _ 'use' PackageName ImportList? Semicolon
+Use <- _ 'use' QualifiedName ImportList? Semicolon
 Constant <- AccessModifier? _ 'const' (KW_val / TypeName) Name Eq Expression Semicolon
 Type <- AnnotationRef* AccessModifier? KW_type TypeName Eq (ApiDecl / AnnotationDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
 Extension <- AccessModifier? _ 'extend' TypeName ApiRefs? ClassBlock
 Function <- AnnotationRef* AccessModifier? MethodSignature MethodBody
 Unsafe <- _ 'unsafe' BlockStart Constant* Type* Function* BlockEnd
 
-PackageName <- Name (Dot Name )*
+QualifiedName <- Name (Dot Name )*
 ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
 NameWithAlias <- Name (_ 'as'  Name)?
 AnnotationRef <- At Name (LP Expression? (Comma Expression)* RP)?
@@ -38,9 +38,10 @@ ClassDecl <- KW_class ClassBody
 NamedClassDecl <- AccessModifier? KW_class TypeName ClassBody
 ClassBody <- DataDecl? ApiRefs? ClassBlock
 DataDecl <- LP TypedArgList RP
-ClassBlock <- BlockStart Constant* (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
+ClassBlock <- BlockStart Constant* Constructor* Destructor? (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
 StaticMethodImpl <- AccessModifier? _ 'static' MethodSignature MethodBody
-
+Constructor <- AccessModifier? Name LP TypedArgList? RP MethodBody
+Destructor <- AccessModifier? _ '#' Name LP RP MethodBody
 AccessModifier <- _ 'pub'
 
 MethodImpl <- _ 'impl' Name OptionalNameList MethodBody
@@ -54,7 +55,7 @@ VariableDeclaration <- VarTitle Assignment
 VarTitle <- KW_val / KW_var / TypeName
 Assignment <- AssignmentExpr Semicolon
 AssignmentExpr <- RegularAssignment / ParallelAssignment
-RegularAssignment <- Name AssignOps Expression
+RegularAssignment <- QualifiedName AssignOps Expression
 ParallelAssignment <- RequiredNameList Eq (TupleConstruction / Expression)
 TupleConstruction <- LP Expression? (Comma Expression)* (Comma Ellipsis)? RP
 RequiredNameList <- LP NameList RP
@@ -131,11 +132,8 @@ NumLiteral <- _ <NumPrefix? [0-9_]+ ('.'[0-9_]+)?NumSuffix? > _
 NumPrefix <- '0x' / '0b' / '0o' / '0d'
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 
-Name <- !Keyword NameSegment
-NameSegment <- _ < [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
+Name <- _ < [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
 
-Keyword <- KWList / NumSuffix
-KWList <- _ (KW_break / KW_case / KW_continue / KW_default / KW_else / KW_for / KW_if / KW_isA / KW_match / KW_return / KW_select / KW_val / KW_var)
 KW_break <- _ 'break' 
 KW_case <- _ 'case' 
 KW_class <- _ 'class' 
@@ -150,7 +148,7 @@ KW_match <- _ 'match'
 KW_return <- _ 'return' 
 KW_select <- _ 'select' 
 KW_type <- _ 'type' 
-KW_val <- _ 'val' 
+KW_val <- _ 'val' _
 KW_var <- _ 'var' 
 
 StringLiteral <- StringSegment (_ '++' StringSegment)*
@@ -175,7 +173,7 @@ RSqB <- _ ']'
 Dot <- _ '.'
 Colon <- _ ':'
 At <- _'@'
-Eq <- _ '='
+Eq <- _ '=' 
 LT <- _ '<'
 GT <- _ '>'
 ~_ <- [ \t\r\n]* Comment?
