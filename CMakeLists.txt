@@ -23,3 +23,4 @@ add_subdirectory(test)
 enable_testing()
 
 add_executable(cbc main.cpp peglib.h)
+target_link_libraries(cbc ${add_link_deps})

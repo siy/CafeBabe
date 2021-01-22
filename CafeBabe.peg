@@ -7,10 +7,9 @@ Extension <- AccessModifier? _ 'extend' TypeName ApiRefs? ClassBlock
 Function <- AnnotationRef* AccessModifier? MethodSignature MethodBody
 Unsafe <- _ 'unsafe' BlockStart Constant* Type* Function* BlockEnd
 
-QualifiedName <- Name (Dot Name )*
 ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
 NameWithAlias <- Name (_ 'as'  Name)?
-AnnotationRef <- At Name (LP Expression? (Comma Expression)* RP)?
+AnnotationRef <- _ '@' Name (LP Expression? (Comma Expression)* RP)?
 
 TupleDecl <- LP TypeName? (Comma TypeName)* (Comma Ellipsis)? RP Semicolon
 ApiDecl <- _ 'api' CommonApiBody
@@ -61,7 +60,9 @@ TupleConstruction <- LP Expression? (Comma Expression)* (Comma Ellipsis)? RP
 RequiredNameList <- LP NameList RP
 ForStatement <- KW_for LP VarTitle Name Colon Expression RP MethodBlockBody
 ReturnStatement <- KW_return Expression? Semicolon
-IterableStatement <- Iterable MethodCall? Semicolon
+IterableStatement <- Iterable Call* Semicolon
+Call <- MethodCall / CallParameters / Index
+MethodCall <- Dot QualifiedName Call?
 
 TypeName <- Name TypeArguments? BitAnd? ArrayDecl*
 ArrayDecl <- LSqB RSqB
@@ -97,15 +98,13 @@ Equality <- Compare (CompareOps Compare)*
 Compare <- Shift (ShiftOps Shift)*
 Shift <- Sum (SumOps Sum)*
 Sum <- Product (MulOps Product)*
-Product <- ((Cast / UnaryOps)* UnaryValue)
-UnaryValue <- (Value / NestedExpr / Ellipsis) PostfixOps?
+Product <- (Cast / UnaryOps)* (MethodReference / Value / NestedExpr / Ellipsis)
 Cast <- LP TypeName RP
-Value <- LiteralValue Call?
-LiteralValue <- NumLiteral / StringLiteral / Iterable / ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / (Name !Ellipsis)
-Call <- (MethodReference / MethodCall / CallParameters / Name / Index)*
+MethodReference <- QualifiedName? DoubleColon Name
+
+Value <- LiteralValue Call* PostfixOps?
+LiteralValue <- CharLiteral / NumLiteral / StringLiteral / Iterable / ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName
 Index <- LSqB Expression RSqB
-MethodReference <- Colon Name
-MethodCall <- Dot Name Call
 Lambda <- (TypeName? CallParameters / Name) Arrow Ellipsis? (Expression / MethodBlockBody)
 NestedExpr <- LP Expression RP 
 ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (Comma AssignmentExpr)* BlockEnd
@@ -128,11 +127,21 @@ AssignOps <- _ < (Eq / '+=' / '-=' / '^=' / '|=' / '&=' ) >
 EqualityOps <- _ < ('==' / '!=') >
 CompareOps <- _ < ('<=' / '>=' / LT / GT / KW_isA) >
 ShiftOps <- _ < ('<<' / '>>' / '>>>') >
-NumLiteral <- _ <NumPrefix? [0-9_]+ ('.'[0-9_]+)?NumSuffix? > _
-NumPrefix <- '0x' / '0b' / '0o' / '0d'
+
+NumLiteral <- (HexNumLiteral / OctNumLiteral / BinNumLiteral / FloatNumLiteral / DecNumLiteral) NumSuffix?
+
+HexNumLiteral <- _ <'0x' [0-9a-fA-F] [0-9a-fA-F_]* > _
+OctNumLiteral <- _ <'0o' [0-7] [0-7_]* > _
+BinNumLiteral <- _ <'0b' [01] [01_]* > _
+FloatNumLiteral <- _ < DecSegment _ '.' DecSegment _ (('e'/'E') _ ('+' / '-')? DecSegment _)? > _
+DecNumLiteral <- _ <DecSegment> _
+DecSegment <- [0-9][0-9_]*
+
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 
-Name <- _ < [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
+QualifiedName <- _ < Name (Dot Name )* > _
+Name <- _ < NameSegment > _
+NameSegment <- [_$@a-zA-Z] [_$a-zA-Z0-9]*
 
 KW_break <- _ 'break' 
 KW_case <- _ 'case' 
@@ -151,8 +160,9 @@ KW_type <- _ 'type'
 KW_val <- _ 'val' _
 KW_var <- _ 'var' 
 
-StringLiteral <- StringSegment (_ '++' StringSegment)*
-StringSegment <- _ < ["] < (!["] .)* > ["] >
+StringLiteral <- StringSegment*
+CharLiteral <- _ < [\'] < ('\'' / ![\'] .) > [\'] > _
+StringSegment <- _ < ["] < ('\\"' / !["] .)* > ["] > _
 Semicolon <- _ ';' _
 Ellipsis <- _ '...' 
 Arrow <- _ '->' 
@@ -172,7 +182,7 @@ LSqB <- _ '['
 RSqB <- _ ']'
 Dot <- _ '.'
 Colon <- _ ':'
-At <- _'@'
+DoubleColon <- _ <'::' > _
 Eq <- _ '=' 
 LT <- _ '<'
 GT <- _ '>'
