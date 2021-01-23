@@ -1,0 +1,3 @@
+use lang.io.Console;
+use one.two.three._;
+use one.two.three { Math, Collection as Coll};

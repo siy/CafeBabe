@@ -1,0 +1,17 @@
+type FN<R, T, ...> = T ->... R;
+
+// Tuple with variable number of components
+type Tuple<T, ...> = class (T value, ...) {
+    R map(FN<R, T, ...> mapper) = mapper(value, ...);
+}
+
+Mapper<T, ...> allOf(Result<T> value, ...) {
+    // Binary right fold expansion with nested unary right fold expansion
+    // value1.flatMap(vv1 ->
+    //  value2.flatMap(vv2 ->
+    //   ...
+    //    valueN.flatMap(vvN ->
+    //     ok(tuple(vv1, vv2, ..., vvN))..);
+
+    return () -> { return value.flatMap(vv ->... ok(tuple(vv, ...))); };
+}

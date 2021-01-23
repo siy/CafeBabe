@@ -1,0 +1,22 @@
+type Bool = True | False;
+
+pub type Option<T> = Just<T> | Nothing<T> {
+    const Nothing NOTHING = nothing();
+
+    // Common API for both case classes
+    Option<R> map(T -> R mapper);               // <- note parameter name #1
+    Option<R> flatMap(T -> Option<R> fMapper);  // <- note parameter name #2
+
+    static Option<T> option(T value) = just(value);
+    static Option<_> empty() = NOTHING;
+
+    class Just {
+        impl map(mapper) = just(mapper(value)); // <- note parameter name is same as #1
+        impl flatMap(fMapper) = fMapper(value); // <- note parameter name is same as #2
+    }
+
+    class Nothing {
+        impl map(mapper) = this;
+        impl flatMap(mapper) = this;
+    }
+}

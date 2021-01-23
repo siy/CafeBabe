@@ -1,0 +1,8 @@
+type Function<T, R> = T -> R;
+type MyTuple = (String, Int, Bool);
+
+type Derive = type annotation(T type) {
+    for (var method : @type.methods) {
+        @this.insertMethod(method.signatureFor(@this.type), "...");
+    }
+}

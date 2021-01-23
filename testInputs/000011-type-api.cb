@@ -1,0 +1,19 @@
+pub type Cloneable = api {
+    <T:Cloneable+> T clone();
+}
+
+type toString = api {
+   String toString();
+}
+
+type Equals = api {
+    Bool equals(Equals other);
+}
+
+type HashCode = api {
+    i64 hashCode();
+}
+
+type Object = ToString, Equals, HashCode {
+    <T:Object+> T clone();
+}

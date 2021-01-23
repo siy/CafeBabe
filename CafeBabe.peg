@@ -1,10 +1,10 @@
 Program <- Use* Constant* Type* Extension* Function* Unsafe*
 
 Use <- _ 'use' QualifiedName ImportList? Semicolon
-Constant <- AccessModifier? _ 'const' (KW_val / TypeName) Name Eq Expression Semicolon
-Type <- AnnotationRef* AccessModifier? KW_type TypeName Eq (ApiDecl / AnnotationDecl / CompoundTypeDecl / TupleDecl / TypeAliasDecl / ClassDecl)
-Extension <- AccessModifier? _ 'extend' TypeName ApiRefs? ClassBlock
-Function <- AnnotationRef* AccessModifier? MethodSignature MethodBody
+Constant <- Public? _ 'const' (KW_val / TypeName) Name Eq Expression Semicolon
+Type <- AnnotationRef* Public? KW_type TypeName Eq (ApiDecl / AnnotationDecl / TypeAliasDecl / CompoundTypeDecl / TupleDecl / ClassDecl)
+Extension <- Public? _ 'extend' TypeName ApiRefs? ClassBlock
+Function <- AnnotationRef* Public? MethodSignature MethodBody
 Unsafe <- _ 'unsafe' BlockStart Constant* Type* Function* BlockEnd
 
 ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
@@ -24,24 +24,22 @@ OrType <- (BitOr TypeName)+
 CommonApiDecl <- ApiRefs? CommonApiBody
 ApiRefs <- Colon TypeNameList
 
-CommonApiBody <- BlockStart Constant* (MethodDecl / StaticMethodImpl)* NamedClassDecl* BlockEnd
-
-MethodDecl <- MethodSignature Semicolon
+CommonApiBody <- BlockStart Constant* ((MethodSignature Semicolon) / StaticMethodImpl)* NamedClassDecl* BlockEnd
 
 MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
-TypedFunction <- TypeName Name LP TypedArgList? RP 
+TypedFunction <- TypeName Name LP TypedArgList? RP
 UntypedFunction <- KW_fn Name OptionalNameList
 OptionalNameList <- LP NameList? RP
-ClassDecl <- KW_class ClassBody
+ClassDecl <- KW_class DataDecl? ApiRefs? (ClassBlock / Semicolon)
 
-NamedClassDecl <- AccessModifier? KW_class TypeName ClassBody
+NamedClassDecl <- Public? KW_class TypeName ClassBody
 ClassBody <- DataDecl? ApiRefs? ClassBlock
 DataDecl <- LP TypedArgList RP
 ClassBlock <- BlockStart Constant* Constructor* Destructor? (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
-StaticMethodImpl <- AccessModifier? _ 'static' MethodSignature MethodBody
-Constructor <- AccessModifier? Name LP TypedArgList? RP MethodBody
-Destructor <- AccessModifier? _ '#' Name LP RP MethodBody
-AccessModifier <- _ 'pub'
+StaticMethodImpl <- Public? _ 'static' MethodSignature MethodBody
+Constructor <- Public? Name LP TypedArgList? RP MethodBody
+Destructor <- Public? _ '#' Name LP RP MethodBody
+Public <- _ 'pub'
 
 MethodImpl <- _ 'impl' Name OptionalNameList MethodBody
 MethodBody <- MethodExpression / MethodBlockBody
@@ -60,9 +58,9 @@ TupleConstruction <- LP Expression? (Comma Expression)* (Comma Ellipsis)? RP
 RequiredNameList <- LP NameList RP
 ForStatement <- KW_for LP VarTitle Name Colon Expression RP MethodBlockBody
 ReturnStatement <- KW_return Expression? Semicolon
-IterableStatement <- Iterable Call* Semicolon
-Call <- MethodCall / CallParameters / Index
-MethodCall <- Dot QualifiedName Call?
+IterableStatement <- Iterable RefChain* Semicolon
+RefChain <- CallParameters / MethodCall / Index
+MethodCall <- Dot QualifiedName RefChain?
 
 TypeName <- Name TypeArguments? BitAnd? ArrayDecl*
 ArrayDecl <- LSqB RSqB
@@ -78,11 +76,11 @@ NameList <- Name (Comma Name)*
 
 Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / KW_break / KW_continue / Expr
 
-IfExpression <- KW_if NestedExpr MethodBlockBody (KW_else MethodBlockBody)?
+IfExpression <- KW_if BooleanExpression MethodBlockBody (KW_else MethodBlockBody)?
 SelectExpression <- KW_select NestedExpr BlockStart SelectCase* Default? BlockEnd
 MatchExpression <- KW_match NestedExpr BlockStart MatchCase* Default? BlockEnd
-TernaryExpression <- NestedExpr _ '?' Expression Colon Expression
-
+TernaryExpression <- NestedExpr QuestMark Expression Colon Expression
+BooleanExpression <- LP Expr RP
 SelectCase <- KW_case CaseExpr Arrow Expression Semicolon
 MatchCase <- TypeName Arrow Expression Semicolon
 Default <- KW_default Arrow Expression Semicolon
@@ -102,22 +100,21 @@ Product <- (Cast / UnaryOps)* (MethodReference / Value / NestedExpr / Ellipsis)
 Cast <- LP TypeName RP
 MethodReference <- QualifiedName? DoubleColon Name
 
-Value <- LiteralValue Call* PostfixOps?
-LiteralValue <- CharLiteral / NumLiteral / StringLiteral / Iterable / ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName
+Value <- LiteralValue RefChain* PostfixOps?
+LiteralValue <-  Lambda / QualifiedName / NumLiteral / CharLiteral / StringLiteral / Iterable / ObjConstruction / ArrayConstruction / TupleConstruction
 Index <- LSqB Expression RSqB
 Lambda <- (TypeName? CallParameters / Name) Arrow Ellipsis? (Expression / MethodBlockBody)
-NestedExpr <- LP Expression RP 
-ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (Comma AssignmentExpr)* BlockEnd
-ArrayConstruction <- LSqB (Expression (Comma Expression)*)? RSqB
-
-Iterable <- Range / Comprehension
-Range <- LSqB NumLiteral SequenceSign NumLiteral (Comma NumLiteral)? RSqB
-OpenRange <- LSqB NumLiteral SequenceSign (NumLiteral (Comma NumLiteral)?)? RSqB
-Comprehension <- LSqB Expr BitOr Name LeftArrow OpenRange (ProductCompr / ParallelCompr) (OutputCondition)?RSqB
-ProductCompr <- (Comma Name LeftArrow OpenRange)*
-ParallelCompr <- (BitOr Name LeftArrow OpenRange)*
-OutputCondition <- Comma Expression
 CallParameters <- LP (Expression (Comma Expression)* (Comma Ellipsis)?)? RP
+NestedExpr <- LP Expression RP
+ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (Comma AssignmentExpr)* BlockEnd
+ArrayConstruction <- BlockStart (Expression (Comma Expression)*)? BlockEnd
+
+Iterable <- Comprehension / OpenRange
+OpenRange <- LSqB NumLiteral SequenceSign (NumLiteral RangeStep?)? RSqB
+RangeStep <- Comma NumLiteral
+
+Comprehension <- LSqB NamedRange ((Comma / LogicalOr) NamedRange)* Colon (NestedExpr Colon)? TupleConstruction RSqB
+NamedRange <- OpenRange Arrow Name
 
 SumOps <- _ < ('+'/'-') >
 MulOps <- _ < ('*' / '/' / '%') >
@@ -140,41 +137,41 @@ DecSegment <- [0-9][0-9_]*
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 
 QualifiedName <- _ < Name (Dot Name )* > _
-Name <- _ < NameSegment > _
-NameSegment <- [_$@a-zA-Z] [_$a-zA-Z0-9]*
+Name <- _ < !('R' '"' '(') [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
 
-KW_break <- _ 'break' 
-KW_case <- _ 'case' 
-KW_class <- _ 'class' 
-KW_continue <- _ 'continue' 
-KW_default <- _ 'default' 
-KW_else <- _ 'else' 
-KW_fn <- _ 'fn' 
-KW_for <- _ 'for' 
-KW_if <- _ 'if' 
-KW_isA <- _ 'isA' 
-KW_match <- _ 'match' 
-KW_return <- _ 'return' 
-KW_select <- _ 'select' 
-KW_type <- _ 'type' 
+KW_break <- _ 'break'
+KW_case <- _ 'case'
+KW_class <- _ 'class'
+KW_continue <- _ 'continue'
+KW_default <- _ 'default'
+KW_else <- _ 'else'
+KW_fn <- _ 'fn'
+KW_for <- _ 'for'
+KW_if <- _ 'if'
+KW_isA <- _ 'isA'
+KW_match <- _ 'match'
+KW_return <- _ 'return'
+KW_select <- _ 'select'
+KW_type <- _ 'type'
 KW_val <- _ 'val' _
-KW_var <- _ 'var' 
+KW_var <- _ 'var'
 
-StringLiteral <- StringSegment*
+StringLiteral <- RawStringLiteral / StringSegment+
 CharLiteral <- _ < [\'] < ('\'' / ![\'] .) > [\'] > _
 StringSegment <- _ < ["] < ('\\"' / !["] .)* > ["] > _
+RawStringLiteral <- _ < 'R' '"' '(' < (!(<')' '"'>) .)* > ')' '"' > _
+
 Semicolon <- _ ';' _
-Ellipsis <- _ '...' 
-Arrow <- _ '->' 
-LeftArrow <- _ '<-' 
-LogicalAnd <- _ '&&' 
-LogicalOr <- _ '||' 
-BitAnd <- _ '&' 
-BitOr <- _ '|' 
-BitXor <- _ '^' 
-Comma <- _ ',' 
-BlockStart <- _ '{'  
-BlockEnd <- _ '}' _ 
+Ellipsis <- _ '...'
+Arrow <- _ < '->' >
+LogicalAnd <- _ '&&'
+LogicalOr <- _ '||'
+BitAnd <- _ '&'
+BitOr <- _ '|'
+BitXor <- _ '^'
+Comma <- _ ','
+BlockStart <- _ '{'
+BlockEnd <- _ '}' _
 SequenceSign <- _ '..'
 LP <- _ '('
 RP <- _ ')'
@@ -183,9 +180,10 @@ RSqB <- _ ']'
 Dot <- _ '.'
 Colon <- _ ':'
 DoubleColon <- _ <'::' > _
-Eq <- _ '=' 
+Eq <- _ '='
 LT <- _ '<'
 GT <- _ '>'
+QuestMark <- _ '?' _
 ~_ <- [ \t\r\n]* Comment?
 Comment <- '//' (!End .)* &End _?
 End <- Eol / Eof

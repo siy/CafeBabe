@@ -1,0 +1,2 @@
+type Result = Option<Int>;
+type Result<T> = Either<Failure, T>;

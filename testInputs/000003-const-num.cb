@@ -1,0 +1,7 @@
+const val x = 0x13_409_5830_9458u64;
+const val b = 0b01010101010101;
+const val f = 1.234_567_890;
+const val f = 1.1_1_1e-10;
+const val i = -1;
+const val j = 65_536;
+const val k = 32768u16;

@@ -19,8 +19,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(add_link_deps Threads::Threads)
 endif()
 
+add_custom_command(
+   OUTPUT grammar.cpp
+   COMMAND ../assemble.sh > ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp
+   DEPENDS CafeBabe.peg
+)
+
 add_subdirectory(test)
 enable_testing()
 
-add_executable(cbc main.cpp peglib.h)
+add_executable(cbc main.cpp peglib.h ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp)
 target_link_libraries(cbc ${add_link_deps})

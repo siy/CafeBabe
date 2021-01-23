@@ -1,0 +1,3 @@
+const FN<A,B> c = ::get;
+const Option<Int> c = Option.just(1);
+pub const List<String> ENV_NAMES = {"main", "staging", "test"};

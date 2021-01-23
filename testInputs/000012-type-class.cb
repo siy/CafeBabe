@@ -1,0 +1,19 @@
+type Element<T> = class (T value) {}
+
+type toString = api {
+   String toString();
+}
+
+pub type Cloneable = api {
+    <T:Cloneable+> T clone();
+}
+
+type Element<T> = class (T value) : Cloneable, ToString {
+    // Two methods need to be implemented, one from Cloneable and one from ToString
+    impl toString() = "Element ${value}";
+    impl clone() = element(value);
+}
+
+// Simple value class (record)
+type Person1 = class (String first, String last, Int age);
+type Person2 = class (String first, String last, Int age) {}
