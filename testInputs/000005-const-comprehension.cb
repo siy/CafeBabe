@@ -1,3 +1,4 @@
-const val seq0 = [[1..10] -> x || [1..10] -> y : (x == y) : (x, y)];
-const val seq1 = [[1..10] -> x, [1..10] -> y : (x == y) : (x, y)];
-const val seq2 = [[1..] -> x, [1..10] -> y : (x, y)];
+const val seq1 = [[1..100, 2] -> x: (x)];
+const val seq2 = [[1..10] -> x || [1..10] -> y : (x == y) : (x, y)];
+const val seq3 = [[1..10] -> x, [1..10] -> y : (x == y) : (x, y)];
+const val seq4 = [[1..] -> x, [1..10] -> y : (x, y)];

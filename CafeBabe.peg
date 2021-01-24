@@ -74,7 +74,7 @@ ArgumentType <- TypeName (Arrow Ellipsis? TypeName)*
 
 NameList <- Name (Comma Name)*
 
-Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / KW_break / KW_continue / Expr
+Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / _ 'break' / _ 'continue' / Expr
 
 IfExpression <- KW_if BooleanExpression MethodBlockBody (KW_else MethodBlockBody)?
 SelectExpression <- KW_select NestedExpr BlockStart SelectCase* Default? BlockEnd
@@ -110,8 +110,7 @@ ObjConstruction <- TypeName? BlockStart (Expression BitOr)? AssignmentExpr (Comm
 ArrayConstruction <- BlockStart (Expression (Comma Expression)*)? BlockEnd
 
 Iterable <- Comprehension / OpenRange
-OpenRange <- LSqB NumLiteral SequenceSign (NumLiteral RangeStep?)? RSqB
-RangeStep <- Comma NumLiteral
+OpenRange <- LSqB NumLiteral SequenceSign NumLiteral? (Comma NumLiteral)? RSqB
 
 Comprehension <- LSqB NamedRange ((Comma / LogicalOr) NamedRange)* Colon (NestedExpr Colon)? TupleConstruction RSqB
 NamedRange <- OpenRange Arrow Name
@@ -136,13 +135,11 @@ DecSegment <- [0-9][0-9_]*
 
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 
-QualifiedName <- _ < Name (Dot Name )* > _
-Name <- _ < !('R' '"' '(') [_$@a-zA-Z] [_$a-zA-Z0-9]* > _
+QualifiedName <- _ <!('R' '"' '(') [_$@a-zA-Z] [_$.a-zA-Z0-9]*> _
+Name <- _ <!('R' '"' '(') [_$@a-zA-Z] [_$a-zA-Z0-9]*> _
 
-KW_break <- _ 'break'
 KW_case <- _ 'case'
 KW_class <- _ 'class'
-KW_continue <- _ 'continue'
 KW_default <- _ 'default'
 KW_else <- _ 'else'
 KW_fn <- _ 'fn'
@@ -156,8 +153,9 @@ KW_type <- _ 'type'
 KW_val <- _ 'val' _
 KW_var <- _ 'var'
 
-StringLiteral <- RawStringLiteral / StringSegment+
 CharLiteral <- _ < [\'] < ('\'' / ![\'] .) > [\'] > _
+
+StringLiteral <- RawStringLiteral / StringSegment+
 StringSegment <- _ < ["] < ('\\"' / !["] .)* > ["] > _
 RawStringLiteral <- _ < 'R' '"' '(' < (!(<')' '"'>) .)* > ')' '"' > _
 

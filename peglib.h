@@ -3731,7 +3731,8 @@ namespace peg {
         }
         if (ast.name != ast.original_name) { name += "[" + ast.name + "]"; }
         if (ast.is_token) {
-            s += "- " + name + " (";
+            s += "- " + name + ":" + std::to_string(ast.line) + ":" + std::to_string(ast.column);
+            s += " (";
             s += ast.token;
             s += ")\n";
         } else {

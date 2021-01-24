@@ -90,19 +90,21 @@ int main(int argc, const char **argv) {
 
     lint_result result;
 
-    if (lint(grammar, code, fileName, result, true)) {
-        if (verbose) {
+    if (verbose) {
+        std::cout << "Code:" << std::endl << code << std::endl;
+    }
+
+    auto rc = lint(grammar, code, fileName, result, true);
+
+    if (verbose) {
+        if (rc) {
             std::cout << "AST:"  << std::endl << result.astOptimized << std::endl;
         } else {
-            std::cout << fileName << " PASS" << std::endl;
-        }
-        return 0;
-    } else {
-        if (verbose) {
             std::cout << "Errors: " << std::endl << result.codeErrors << std::endl;
-        } else {
-            std::cout << fileName << " FAIL" << std::endl;
         }
-        return -1;
     }
+
+    std::cout << fileName << (rc ? " PASS" : " FAIL") << std::endl;
+
+    return rc ? 0 : -1;
 }
