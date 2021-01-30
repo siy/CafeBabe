@@ -8,7 +8,7 @@ I need:
  - Readable code suitable for long term development and maintenance
  - Support for FP (Functional Programming) and OOP (Object-Oriented Programming)
  - Simple regular syntax, expressive and consistent
- - Suitable for both, low level and high level code without need to use other language
+ - Suitable for low level and for high level code without need to use other language
  - Extensible with built-in tools
  - Fast yet safe memory management
  - Resource consumption dictated by application, not platform/VM application is running on
@@ -24,12 +24,10 @@ inherited very little from Java syntax, but enterprise focus is definitely inher
 Variadic templates and fold expansion are inspired by C++ (C++11 and C++17).
 
 ### Rust
-The approach to memory and resource management is inspired by Rust. I believe that Rust approach to resource
-management is an elegant solution for one of the most complex problems in programming.
+The approach to memory and resource management is inspired by Rust.
 
 ### Haskell
-The Haskell is a main source of inspiration for FP features. Main one - understanding that creating types must
-be as simple and convenient as possible.
+The Haskell helped to understand that creating types must be as simple and convenient as possible.
 
 ### Elm
 Elegant and clean syntax for manipulation of immutable classes borrowed almost unchanged from Elm.
@@ -56,6 +54,7 @@ Below listed some key features:
  - Compile-time annotations with built-in annotation processing
  - Sequence comprehension
  - String interpolation
+ - Named arguments
  - Duck typing (?)
 
 ## Code Organization
@@ -69,6 +68,7 @@ Each source file (compilation unit) has fixed structure:
  - Extensions 
  - Functions
  - Unsafe code
+ - Tests
 
 Strict source code structure and organization of source files avoid unnecessary discussions and
 reduce area for inventions of useless style guides.
@@ -115,9 +115,11 @@ type Result<T> = Either<Failure, T>;
 Simple publicly visible API with one method:
 ```
 pub type Cloneable = api {
-    <T:Cloneable+> T clone();
+    <T:Cloneable> T clone();
 } 
 ```
+Note that declaration of `T` contains type constraints.
+
 Assembling complex API from other API's with extra methods:
 ```
 type toString = api {
@@ -133,7 +135,7 @@ type HashCode = api {
 }
 
 type Object = ToString, Equals, HashCode {
-    <T:Object+> T clone();
+    <T:Object> T clone();
 }
 ```
 #### Class declaration
@@ -146,7 +148,8 @@ This class gets:
  - private destructor which destroys 'value' depending on the type
  - static factory method named after class name with leading character converted to lower case
  - Accessor (getter) for value
-Note that class declaration basically is a template which is instantiated for each different 
+
+Note that class declaration shown above is a template which is instantiated for each different 
 type for which this class is created. 
 
 Example of more complex class which implements few api's:
@@ -156,7 +159,7 @@ type toString = api {
 }
 
 pub type Cloneable = api {
-    <T:Cloneable+> T clone();
+    <T:Cloneable> T clone();
 } 
 
 type Element<T> = class (T value) : Cloneable, ToString {
@@ -186,12 +189,12 @@ pub type Option<T> = Just<T> | Nothing<T> {
     static Option<T> option(T value) = just(value);
     static Option<_> empty() = NOTHING;
 
-    class Just {
+    class Just<T>(T value) {
         impl map(mapper) = just(mapper(value));
         impl flatMap(mapper) = mapper(value);
     }
 
-    class Nothing {
+    class Nothing<_> {
         impl map(mapper) = this;
         impl flatMap(mapper) = this;
     }
@@ -215,8 +218,18 @@ type Derive = type annotation(T type) {
     }
 }
 ```
-
 ### Extensions
+The extensions allow to add extension methods to class. It might be single
+method or implementation of interface(s):
+
+```
+pub extend Bool : toString {
+    impl toString() = match (this) {
+        Nothing -> "Nothing";
+        Just -> 
+    };
+}
+```
 
 ### Functions
 #### Plain Functions
@@ -294,20 +307,19 @@ Mapper<T, ...> allOf(Result<T> value, ...) {
 ### Ranges, Sequences and iterables
 Simple ranges:
 ```
-const val q = [1..100]; //Simple range
-const val q = [1..100, 2]; // from 1 to 100 by 2 
+const val q = 1..100;
 ```
 Simple ranges as loop definition:
 ```
 fn loopDemo() {
-    for(int i : [1..100, 2]) {
+    for(int i : 1..100) {
         Console.out("Sequence ${i}");
     }
 }
 ```
 Sequence comprehensions:
 ```
-const val seq = [x * 2 | x <- [1..10], y <- [1..10]];
+const val seq = [x:[1..10], y:[1..10] -> x % 2 == 0 -> x != y -> (x * 2, y)];
 ```
 
 
