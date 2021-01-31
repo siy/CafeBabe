@@ -8,7 +8,7 @@
 #include <functional>
 #include <fstream>
 #include <sstream>
-#include "peglib.h"
+#include <peglib.h>
 
 std::function<void(size_t, size_t, const std::string &)> makeErrorLogger(std::string &errorText) {
     return [&](size_t ln, size_t col, const std::string &msg) mutable {

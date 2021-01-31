@@ -1,4 +1,4 @@
-# CafeBabe grammar
+# CafeBabe v0.1 grammar
 
 Program <- Use* Commons Unsafe* Test*
 Commons <- Constant* Type* Extension* Function*
@@ -121,14 +121,14 @@ Comprehension <- LSqB NamedRange ((Comma / BitOr) NamedRange)* ComprPipeline RSq
 NamedRange <- Name Colon OpenRange
 ComprPipeline <- Arrow Expression (BitOr Expression)*
 
-SumOps <- __ ('+'/'-')
-MulOps <- __ ('*' / '/' / '%')
-UnaryOps <- __ ('-' / '+' / '--' / '++' / '!' / '~')
-PostfixOps <- __ ('--' / '++')
-AssignOps <- __ (Eq / '+=' / '-=' / '^=' / '|=' / '&=' )
-EqualityOps <- __ ('==' / '!=')
-CompareOps <- __ ('<=' / '>=' / LT / GT / KW_isA)
-ShiftOps <- __ ('<<' / '>>' / '>>>')
+SumOps <- __ <('+'/'-')>
+MulOps <- __ <('*' / '/' / '%')>
+UnaryOps <- __ <('-' / '+' / '--' / '++' / '!' / '~')>
+PostfixOps <- __ <('--' / '++')>
+AssignOps <- __ <(Eq / '+=' / '-=' / '^=' / '|=' / '&=' )>
+EqualityOps <- __ <('==' / '!=')>
+CompareOps <- __ <('<=' / '>=' / LT / GT / KW_isA)>
+ShiftOps <- __ <('<<' / '>>' / '>>>')>
 
 NumLiteral <- BasedNumLiteral NumSuffix?
 BasedNumLiteral <- HexNumLiteral / OctNumLiteral / BinNumLiteral / FloatNumLiteral / DecNumLiteral
@@ -141,53 +141,53 @@ DecSegment <- [0-9][0-9_]*
 
 NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
 
-QualifiedName <- __ !('R' '"' '(') <[_$@a-zA-Z] [_$.a-zA-Z0-9]*> __
-Name <- __ !('R' '"' '(') <[_$@a-zA-Z] [_$a-zA-Z0-9]*> __
+QualifiedName <- __ !('F"') <[_$@a-zA-Z] [_$.a-zA-Z0-9]*> __
+Name <- __ !('F"') <[_$@a-zA-Z] [_$a-zA-Z0-9]*> __
 
-KW_case <- __ 'case'
-KW_class <- __ 'class'
-KW_default <- __ 'default'
-KW_else <- __ 'else'
-KW_fn <- __ 'fn'
-KW_for <- __ 'for'
-KW_if <- __ 'if'
-KW_isA <- __ 'isA'
-KW_match <- __ 'match'
-KW_return <- __ 'return'
-KW_select <- __ 'select'
-KW_type <- __ 'type'
-KW_val <- __ 'val' __
-KW_var <- __ 'var'
+KW_case <- __ <'case'>
+KW_class <- __ <'class'>
+KW_default <- __ <'default'>
+KW_else <- __ <'else'>
+KW_fn <- __ <'fn'>
+KW_for <- __ <'for'>
+KW_if <- __ <'if'>
+KW_isA <- __ <'isA'>
+KW_match <- __ <'match'>
+KW_return <- __ <'return'>
+KW_select <- __ <'select'>
+KW_type <- __ <'type'>
+KW_val <- __ <'val'>
+KW_var <- __ <'var'>
 
 CharLiteral <- __ [\'] ('\'' / ![\'] .) [\'] __
 
-StringLiteral <- RawStringLiteral / StringSegment+
-StringSegment <- __ ["] < ('\\"' / !["] .)* > ["] __
-RawStringLiteral <- __ 'R' '"' '(' < (!( ')' '"') .)* > ')' '"' __
+StringLiteral <- InterpolatedStringLiteral / StringSegment+
+StringSegment <- __ '"' < ('\\"' / !'"' .)* > '"' __
+InterpolatedStringLiteral <- __ 'F"' < ('\\"' / !'"' .)* > '"' __
 
-Semicolon <- __ ';' __
-Ellipsis <- __ '...'
-Arrow <- __ '->'
-LogicalAnd <- __ '&&'
-LogicalOr <- __ '||'
-BitAnd <- __ '&'
-BitOr <- __ '|'
-BitXor <- __ '^'
-Comma <- __ ','
-BlockStart <- __ '{'
-BlockEnd <- __ '}' __
-SequenceSign <- __ '..'
-LP <- __ '('
-RP <- __ ')'
-LSqB <- __ '['
-RSqB <- __ ']'
-Dot <- __ '.'
-Colon <- __ ':'
-DoubleColon <- __ '::' __
-Eq <- __ '='
-LT <- __ '<'
-GT <- __ '>'
-QuestMark <- __ '?' __
+Semicolon <- __ <';'> __
+Ellipsis <- __ <'...'>
+Arrow <- __ <'->'>
+LogicalAnd <- __ <'&&'>
+LogicalOr <- __ <'||'>
+BitAnd <- __ <'&'>
+BitOr <- __ <'|'>
+BitXor <- __ <'^'>
+Comma <- __ <','>
+BlockStart <- __ <'{'>
+BlockEnd <- __ <'}'> __
+SequenceSign <- __ <'..'>
+LP <- __ <'('>
+RP <- __ <')'>
+LSqB <- __ <'['>
+RSqB <- __ <']'>
+Dot <- __ <'.'>
+Colon <- __ <':'>
+DoubleColon <- __ <'::'>
+Eq <- __ <'='>
+LT <- __ <'<'>
+GT <- __ <'>'>
+QuestMark <- __ <'?'>
 __ <- [ \t\r\n]* Comment?
 Comment <- '//' (!End .)* &End __?
 End <- Eol / Eof

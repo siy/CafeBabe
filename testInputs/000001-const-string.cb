@@ -1,5 +1,4 @@
 const val s1 = " string ";
 const val s2 = " string "  " other string";
-const val s3 = R"(  asasd  ASD AASD)";
-const val s4 = R"(
-)";
+const val s3 = F"  asasd  ASD AASD";
+const val s4 = F" $name ";
