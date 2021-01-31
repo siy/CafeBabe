@@ -3,8 +3,8 @@
 Program <- Use* Commons Unsafe* Test*
 Commons <- Constant* Type* Extension* Function*
 Use <- __ 'use' QualifiedName ImportList? Semicolon
-Constant <- Public? __ 'const' (KW_val / TypeName) Name Eq Expression Semicolon
-Type <- AnnotationRef* Public? KW_type TypeName Eq (ApiDecl / AnnotationDecl / TypeAliasDecl / CompoundTypeDecl / TupleDecl / ClassDecl)
+Constant <- Public? __ 'const' (__ 'val' / TypeName) Name Eq Expression Semicolon
+Type <- AnnotationRef* Public? __ 'type' TypeName Eq (ApiDecl / AnnotationDecl / TypeAliasDecl / CompoundTypeDecl / TupleDecl / ClassDecl)
 Extension <- Public? __ 'extend' TypeName ApiRefs? ClassBlock
 Function <- AnnotationRef* Public? MethodSignature MethodBody
 Unsafe <- __ 'unsafe' BlockStart Commons Test* BlockEnd
@@ -26,11 +26,11 @@ ApiRefs <- Colon TypeNameList
 CommonApiBody <- BlockStart Constant* ((MethodSignature Semicolon) / StaticMethodImpl)* NamedClassDecl* BlockEnd
 MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
 TypedFunction <- TypeName Name LP TypedArgList? RP
-UntypedFunction <- KW_fn Name OptionalNameList
+UntypedFunction <- __ 'fn' Name OptionalNameList
 OptionalNameList <- LP NameList? RP
 
-ClassDecl <- KW_class DataDecl? ApiRefs? (ClassBlock / Semicolon)
-NamedClassDecl <- Public? KW_class TypeName ClassBody
+ClassDecl <- __ 'class' DataDecl? ApiRefs? (ClassBlock / Semicolon)
+NamedClassDecl <- Public? __ 'class' TypeName ClassBody
 ClassBody <- DataDecl? ApiRefs? ClassBlock
 DataDecl <- LP TypedArgList RP
 ClassBlock <- BlockStart Constant* Constructor* Destructor? (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
@@ -47,15 +47,15 @@ MethodBlockBody <- BlockStart Statement* BlockEnd
 Statement <- ForStatement / IfExpression / SelectExpression / MatchExpression / ReturnStatement  / __ 'break' __ Semicolon / __ 'continue' __ Semicolon / VariableDeclaration / Assignment / IterableStatement / MethodBlockBody / ValueStatement
 ValueStatement <- Value Semicolon
 VariableDeclaration <- VarTitle Assignment
-VarTitle <- KW_val / KW_var / TypeName
+VarTitle <- __ ('val' / 'var' / TypeName)
 Assignment <- AssignmentExpr Semicolon
 AssignmentExpr <- RegularAssignment / ParallelAssignment
 RegularAssignment <- QualifiedName AssignOps Expression
 ParallelAssignment <- RequiredNameList Eq (TupleConstruction / Expression)
 TupleConstruction <- LP Expression? (Comma Expression)* (Comma Ellipsis)? RP
 RequiredNameList <- LP <NameList> RP
-ForStatement <- KW_for LP VarTitle Name Colon Expression RP MethodBlockBody
-ReturnStatement <- KW_return Expression? Semicolon
+ForStatement <- __ 'for' LP VarTitle Name Colon Expression RP MethodBlockBody
+ReturnStatement <- __ 'return' Expression? Semicolon
 IterableStatement <- Iterable RefChain* Semicolon
 RefChain <- CallParameters / MethodCall / Index
 MethodCall <- Dot QualifiedName RefChain?
@@ -74,14 +74,14 @@ NameList <- Name (Comma Name)*
 
 Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / Expr
 
-IfExpression <- KW_if BooleanExpression MethodBlockBody (KW_else MethodBlockBody)?
-SelectExpression <- KW_select NestedExpr BlockStart SelectCase* Default? BlockEnd
-MatchExpression <- KW_match NestedExpr BlockStart MatchCase* Default? BlockEnd
+IfExpression <- __ 'if' BooleanExpression MethodBlockBody (__ 'else' MethodBlockBody)?
+SelectExpression <- __ 'select' NestedExpr BlockStart SelectCase* Default? BlockEnd
+MatchExpression <- __ 'match' NestedExpr BlockStart MatchCase* Default? BlockEnd
 TernaryExpression <- NestedExpr QuestMark Expression Colon Expression
 BooleanExpression <- LP Expression RP
-SelectCase <- KW_case CaseExpr Arrow Expression Semicolon
+SelectCase <- __ 'case' CaseExpr Arrow Expression Semicolon
 MatchCase <- TypeName Arrow Expression Semicolon
-Default <- KW_default Arrow Expression Semicolon
+Default <- __ 'default' Arrow Expression Semicolon
 CaseExpr <- (NumLiteral / StringLiteral / ObjConstruction)
 
 Expr <- Or (LogicalOr Or)*
@@ -127,7 +127,7 @@ UnaryOps <- __ <('-' / '+' / '--' / '++' / '!' / '~')>
 PostfixOps <- __ <('--' / '++')>
 AssignOps <- __ <(Eq / '+=' / '-=' / '^=' / '|=' / '&=' )>
 EqualityOps <- __ <('==' / '!=')>
-CompareOps <- __ <('<=' / '>=' / LT / GT / KW_isA)>
+CompareOps <- __ <('<=' / '>=' / LT / GT / 'isA')>
 ShiftOps <- __ <('<<' / '>>' / '>>>')>
 
 NumLiteral <- BasedNumLiteral NumSuffix?
@@ -143,21 +143,6 @@ NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16'
 
 QualifiedName <- __ !('F"') <[_$@a-zA-Z] [_$.a-zA-Z0-9]*> __
 Name <- __ !('F"') <[_$@a-zA-Z] [_$a-zA-Z0-9]*> __
-
-KW_case <- __ <'case'>
-KW_class <- __ <'class'>
-KW_default <- __ <'default'>
-KW_else <- __ <'else'>
-KW_fn <- __ <'fn'>
-KW_for <- __ <'for'>
-KW_if <- __ <'if'>
-KW_isA <- __ <'isA'>
-KW_match <- __ <'match'>
-KW_return <- __ <'return'>
-KW_select <- __ <'select'>
-KW_type <- __ <'type'>
-KW_val <- __ <'val'>
-KW_var <- __ <'var'>
 
 CharLiteral <- __ [\'] ('\'' / ![\'] .) [\'] __
 
