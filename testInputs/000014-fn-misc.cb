@@ -1,0 +1,15 @@
+//all types explicit
+String makeString(int a, int b) = F"${a} ${b}"; 
+
+// return type inferred
+fn makeString(int a, int b) = F"${a} ${b}"; 
+
+// all types explicit, block form
+String makeString(int a, int b) { 
+    return F"${a} ${b}";
+}
+
+//return type inferred, block form
+fn makeString(int a, int b) { 
+    return F"${a} ${b}";
+}

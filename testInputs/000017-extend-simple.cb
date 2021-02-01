@@ -1,0 +1,6 @@
+pub extend Bool : toString {
+    impl toString() = match (this) {
+        Nothing -> "Nothing";
+        Just -> "${this.value()}";
+    };
+}

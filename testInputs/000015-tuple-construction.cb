@@ -1,0 +1,14 @@
+type MyTuple = (String, Int, Bool);
+type Unit = ();
+
+fn main() {
+    val u = ();
+    val one = (1);
+    val two = (2, 4);
+    val three = (one, two);
+    
+    val four = (three | (5), _);
+
+    val (head, tail) = three;
+    val four = ((5), tail);
+}

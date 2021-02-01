@@ -52,7 +52,7 @@ Assignment <- AssignmentExpr Semicolon
 AssignmentExpr <- RegularAssignment / ParallelAssignment
 RegularAssignment <- QualifiedName AssignOps Expression
 ParallelAssignment <- RequiredNameList Eq (TupleConstruction / Expression)
-TupleConstruction <- LP Expression? (Comma Expression)* (Comma Ellipsis)? RP
+TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* (Comma Ellipsis)? RP
 RequiredNameList <- LP <NameList> RP
 ForStatement <- __ 'for' LP VarTitle Name Colon Expression RP MethodBlockBody
 ReturnStatement <- __ 'return' Expression? Semicolon
@@ -96,10 +96,11 @@ Shift <- Sum (SumOps Sum)*
 Sum <- Product (MulOps Product)*
 Product <- (Cast / UnaryOps)* (MethodReference / Value / NestedExpr / Ellipsis)
 Cast <- LP TypeName RP
+NestedExpr <- LP Expression RP
 MethodReference <- QualifiedName? DoubleColon Name
 
-Value <- (Lambda / QualifiedName / Iterable / LiteralValue) RefChain* PostfixOps?
-LiteralValue <- NumLiteral / CharLiteral / StringLiteral / ObjConstruction / ArrayConstruction / TupleConstruction
+Value <- (ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName / Iterable / LiteralValue) RefChain* PostfixOps?
+LiteralValue <- NumLiteral / CharLiteral / StringLiteral
 Index <- LSqB Expression RSqB
 Lambda <- (SingleParamLambda / MultiparamLambda) Ellipsis? (Expression / MethodBlockBody)
 SingleParamLambda <- (Name Arrow)+
@@ -108,11 +109,12 @@ MultiparamLambda <- TypeName? CallParameters Arrow
 CallParameters <- NamedCallParameters/AnonymousCallParameters
 NamedCallParameters <- LP NamedAssignmentList RP
 AnonymousCallParameters <- LP (Expression (Comma Expression)* (Comma Ellipsis)?)? RP
-NestedExpr <- LP Expression RP
-ObjConstruction <- TypeName? BlockStart (Expression BitOr)? NamedAssignmentList BlockEnd
-ArrayConstruction <- LSqB (Expression (Comma Expression)*)? RSqB
+ObjConstruction <- TypeName? BlockStart ValueReference? NamedAssignmentList BlockEnd
 NamedAssignmentList <- NamedAssignment (Comma NamedAssignment)*
 NamedAssignment <- Name Eq Expression
+ValueReference <- QualifiedName RefChain* BitOr
+
+ArrayConstruction <- LSqB (Expression (Comma Expression)*)? RSqB
 
 Iterable <- Comprehension / OpenRange
 OpenRange <- NumLiteral SequenceSign NumLiteral?

@@ -38,17 +38,17 @@ The CafeBabe is a statically typed, hybrid FP/OOP language compiled into native 
 Below listed some key features:
  - Compact, regular C-style syntax. Whole grammar contains less than 200 rules.
  - Functions are first class citizens
- - Immutable data structures by default  
+ - Immutable data structures by default
  - Type inference
  - Algebraic data types
- - Pattern matching and smart type cast  
+ - Pattern matching and smart type cast 
  - No _null_
  - Unlimited interface (aka 'api') inheritance
  - No class inheritance
  - Extensions (similar to extension methods)
  - Ownership-based memory and resource management (aka Non-Lexical Lifetimes borrow checker in Rust)
  - Unsafe mode with access to manual memory management and address arithmetic
- - Class destructors  
+ - Class destructors 
  - Built-in primitive types completely interchangeable with wrapped types ('classes')
  - Templates (aka type classes) with variadic templates with fold expressions
  - Compile-time annotations with built-in annotation processing
@@ -206,10 +206,6 @@ pub type Option<T> = Just<T> | Nothing<T> {
 ```
 type Function<T, R> = T -> R;
 ```
-##### Tuple type
-```
-type MyTuple = (String, Int, Bool);
-```
 ##### Annotation type
 ```
 type Derive = type annotation(T type) {
@@ -226,7 +222,7 @@ method or implementation of interface(s):
 pub extend Bool : toString {
     impl toString() = match (this) {
         Nothing -> "Nothing";
-        Just -> 
+        Just -> "${this.value()}";
     };
 }
 ```
@@ -235,19 +231,19 @@ pub extend Bool : toString {
 #### Plain Functions
 ```
 //all types explicit
-String makeString(int a, int b) = "" + a + " " + b; 
+String makeString(int a, int b) = F"${a} ${b}"; 
 
 // return type inferred
-fn makeString(int a, int b) = "" + a + " " + b; 
+fn makeString(int a, int b) = F"${a} ${b}"; 
 
 // all types explicit, block form
 String makeString(int a, int b) { 
-    return "" + a + " " + b;
+    return F"${a} ${b}";
 }
 
 //return type inferred, block form
 fn makeString(int a, int b) { 
-    return "" + a + " " + b;
+    return F"${a} ${b}";
 }
 ```
 #### Generic Functions
@@ -260,10 +256,6 @@ fn add(a, b) = a + b; //all types inferred
 #### Lambdas
 
 ```
-int (int a, int b) = a + b  // explicit argument types and return type
-(a, b) = a + b              // all types inferred
-int (a, b) = a + b          // return type explicit, rest inferred
-a, b = a + b                // without parentheses, accepted in limited context like where it passed as a parameter 
 ```
 
 ### Unsafe code
@@ -297,12 +289,6 @@ Mapper<T, ...> allOf(Result<T> value, ...) {
     return () -> { return value.flatMap(vv ->... ok(tuple(vv, ...))); };
 }
 ```
-### Tuples
-```
-() // empty tuple, unit
-(a) // tuple with one element
-(a, b) // tuple with two elements
-```
 
 ### Ranges, Sequences and iterables
 Simple ranges:
@@ -313,24 +299,63 @@ Simple ranges as loop definition:
 ```
 fn loopDemo() {
     for(int i : 1..100) {
-        Console.out("Sequence ${i}");
+        Console.out(F"Sequence ${i}");
     }
 }
 ```
 Sequence comprehensions:
 ```
-const val seq = [x:[1..10], y:[1..10] -> x % 2 == 0 -> x != y -> (x * 2, y)];
+const val seq1 = [x:1..100 -> x];   // => 1, 2, 3, ..., 100
+const val seq2 = [x:1..10 | y:1..10 -> (x, y)]; // => (1, 1), (2, 2), (3, 3) ... (10, 10)
+const val seq3 = [x:1..10, y:1..10 -> x != y | (x, y)]; // => (1, 2), (1, 3) ... (2, 1), (2, 3) ... (9, 10), (10, 1) ... (10, 9)
+const val seq4 = [x:1.., y:1..10 -> (x, y)]; // infinite Sequence! => (1, 1), (1, 2) ... (1, 10), ... (2, 1), (2, 2) ... (2, 10) ...
 ```
+Overall syntax for comprehension consists of three main parts:
+ - ranges for parameters
+ - oprional filtering condition
+ - output expression
 
+ Two variants of comprehension are supported - regular and parallel. In regular comprehension all variables are changing independently, so
+the unfiltered output contains cartesian product of combinations of all variables. In parallel comprehension all variables are changing
+simultaneously, so unfiltered output contains "zipped" set of values. In the example above `seq3` and `seq4` are regular comprehensions 
+while `seq2` is a parallel comprehension. 
 
-### Using Immutable Classes
-
+### Using Tuples and Immutable Classes
+#### Immutable Classes
+One of the most frequent tasks while working with immutable data - create modified copy of the class.
+This case has special support in syntax:
 ```
-type Person = class (String first, String last, Int age) {}
+type Person = class (String first, String last, Int age);
 
 fn main() {
-    Person john = { first = "John", last = "Hobson", age = 81 };
-    john = { john | last = "Adams" };
-    john = { john | age = 22 }; 
+    var john = Person { first = "John", last = "Hobson", age = 81 };
+
+    john = { john | last = "Adams", age = 22 };
 }
+```
+#### Tuples
+
+Tuples can be used to declare types:
+```
+type MyTuple = (String, Int, Bool);
+type Unit = ();
+```
+
+Simple tuples can be created as follows:
+```
+val u = ();             // empty tuple, unit
+val one = (1);          // tuple with one element
+val two = (2, 4);       // tuple with two elements
+val three = (one, two); // tuple with two tuples inside: ((1), (2, 4))
+```
+Tuples are immutable but modified copies of tuples can be created using 
+syntax similar to classes:
+
+```
+val four = (three | (5), _);
+```
+Another approach is to use destructuring:
+```
+val (head, tail) = three;
+val four = ((5), tail);
 ```

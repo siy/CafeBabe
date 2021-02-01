@@ -1,0 +1,7 @@
+type Person = class (String first, String last, Int age);
+
+fn main() {
+    var john = Person { first = "John", last = "Hobson", age = 81 };
+
+    john = { john | last = "Adams", age = 22 };
+}

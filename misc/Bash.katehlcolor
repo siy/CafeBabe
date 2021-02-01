@@ -1,0 +1,39 @@
+[Highlighting Bash - Schema Vim (dark)]
+Alerts:Alert Level 1=28,ffe85848,ffe85848,1,0,0,0,ff451e1a,ff000000,,---
+Alerts:Alert Level 2=28,ffca9219,ffca9219,1,0,0,0,ff451e1a,ff000000,,---
+Alerts:Alert Level 3=28,ff81ca2d,ff81ca2d,1,0,0,0,fff7e6e6,,,---
+Alerts:Normal Text=0,ffb2b2b2,ffb2b2b2,1,0,0,0,,,,---
+Alerts:Region Marker=25,ff0095ff,ff0095ff,1,0,0,0,ff22226d,,,---
+Bash:Backquote=1,ffdede49,ffdede49,1,0,0,0,,,,---
+Bash:Builtin=6,ff644a9b,ff452886,1,0,0,0,,,,---
+Bash:Command=2,ff644a9b,ff644a9b,1,0,0,0,,,,---
+Bash:Comment=21,ff54ffff,ff54ffff,1,0,0,0,,,,---
+Bash:Control=1,ffdede49,ffdede49,1,0,0,0,,,,---
+Bash:Error=30,ffffaa00,ffff5500,1,0,0,1,,,,---
+Bash:Escape=16,ff54ff54,ff54ff54,1,0,0,0,,,,---
+Bash:Expression=29,ff006e28,ff006e28,1,0,0,0,,,,---
+Bash:Function=2,ff644a9b,ff644a9b,1,0,0,0,,,,---
+Bash:Keyword=1,ffdede49,ffdede49,1,0,0,0,,,,---
+Bash:Normal Text=0,ffb2b2b2,ffb2b2b2,1,0,0,0,,,,---
+Bash:Option=0,ffb2b2b2,ffb2b2b2,1,0,0,0,,,,---
+Bash:OtherCommand=7,ff0095ff,ff0095ff,1,0,0,0,,,,---
+Bash:Path=0,ffb2b2b2,ffb2b2b2,1,0,0,0,,,,---
+Bash:Redirection=5,ffb2b2b2,ffb2b2b2,1,0,0,0,,,,---
+Bash:String DoubleQ=12,ffaf7f00,ffaf7f00,1,0,0,0,,,,---
+Bash:String Escape=16,ff54ff54,ff54ff54,1,0,0,0,,,,---
+Bash:String SingleQ=12,ffaf7f00,ffaf7f00,1,0,0,0,,,,---
+Bash:String Transl.=12,ffaf7f00,ffaf7f00,1,0,0,0,,,,---
+Bash:Variable=3,ffaaaaff,ffaaaaff,1,0,0,0,,,,---
+Modelines:Comment=21,ff54ffff,ff54ffff,1,0,0,0,,,,---
+Modelines:Keyword=23,ff0095ff,ff0095ff,1,0,0,0,,,,---
+Modelines:Number=17,ffff54ff,ffff54ff,1,0,0,0,,,,---
+Modelines:Option OFF=29,ff006e28,ff006e28,1,0,0,0,,,,---
+Modelines:Option ON=29,ff006e28,ff006e28,1,0,0,0,,,,---
+Modelines:String=12,ffaf7f00,ffaf7f00,1,0,0,0,,,,---
+Modelines:Value=29,ff006e28,ff006e28,1,0,0,0,,,,---
+Modelines:Variable=24,ffff54ff,ffff54ff,1,0,0,0,,,,---
+
+[KateHLColors]
+full schema=false
+highlight=Bash
+schema=Vim (dark)
