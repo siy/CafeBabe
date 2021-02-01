@@ -44,7 +44,8 @@ Below listed some key features:
  - Pattern matching and smart type cast 
  - No _null_
  - Unlimited interface (aka 'api') inheritance
- - No class inheritance
+ - No class inheritance (each class considered 'final' in Java terms)
+ - Default method in interfaces
  - Extensions (similar to extension methods)
  - Ownership-based memory and resource management (aka Non-Lexical Lifetimes borrow checker in Rust)
  - Unsafe mode with access to manual memory management and address arithmetic

@@ -23,7 +23,7 @@ OrType <- TypeName (BitOr TypeName)+
 
 CommonApiDecl <- ApiRefs? CommonApiBody
 ApiRefs <- Colon TypeNameList
-CommonApiBody <- BlockStart Constant* ((MethodSignature Semicolon) / StaticMethodImpl)* NamedClassDecl* BlockEnd
+CommonApiBody <- BlockStart Constant* ((MethodSignature Semicolon) / StaticMethodImpl / DefaultMethodImpl)* NamedClassDecl* BlockEnd
 MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
 TypedFunction <- TypeName Name LP TypedArgList? RP
 UntypedFunction <- __ 'fn' Name OptionalNameList
@@ -35,6 +35,7 @@ ClassBody <- DataDecl? ApiRefs? ClassBlock
 DataDecl <- LP TypedArgList RP
 ClassBlock <- BlockStart Constant* Constructor* Destructor? (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
 StaticMethodImpl <- Public? __ 'static' MethodSignature MethodBody
+DefaultMethodImpl <- __ 'default' MethodSignature MethodBody
 Constructor <- Public? Name LP TypedArgList? RP MethodBody
 Destructor <- Public? __ '#' Name LP RP MethodBody
 Public <- __ 'pub'

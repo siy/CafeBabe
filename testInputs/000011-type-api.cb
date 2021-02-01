@@ -15,5 +15,5 @@ type HashCode = api {
 }
 
 type Object = ToString, Equals, HashCode {
-    <T:Object+> T clone();
+    default <T:Object+> T clone() = this;
 }
