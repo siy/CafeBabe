@@ -23,6 +23,7 @@ bool parse_grammar(const std::string &text, peg::parser &peg, std::string &error
 
 bool parse_code(const std::string &text, peg::parser &peg, std::string &errorText, std::shared_ptr<peg::Ast> &ast) {
     peg.enable_ast();
+    peg.enable_packrat_parsing();
     peg.log = makeErrorLogger(errorText);
     return peg.parse_n(text.data(), text.size(), ast);
 }
@@ -33,7 +34,35 @@ struct lint_result {
     std::string astOptimized;
 };
 
-bool lint(const std::string &grammarText, const std::string &codeText, std::string &fileName, lint_result& result, bool opt_mode = true) {
+template <typename T>
+std::shared_ptr<T> optimize(std::shared_ptr<T> original,
+                            std::shared_ptr<T> parent = nullptr) {
+
+    auto ast = std::make_shared<T>(*original);
+    ast->parent = parent;
+    ast->nodes.clear();
+    for (auto node : original->nodes) {
+        if (!node->name.compare("__")) {
+            continue;
+        }
+        if (!node->name.compare("Semicolon")) {
+            continue;
+        }
+        if (!node->name.compare("BlockStart")) {
+            continue;
+        }
+        if (!node->name.compare("BlockEnd")) {
+            continue;
+        }
+
+        auto child = optimize(node, ast);
+
+        ast->nodes.push_back(child);
+    }
+    return ast;
+}
+
+bool lint(const std::string &grammarText, const std::string &codeText, std::string &fileName, lint_result& result) {
     std::string grammarErrors;
     std::string codeErrors = fileName + "\n";
     std::string astOptimizedText;
@@ -45,7 +74,8 @@ bool lint(const std::string &grammarText, const std::string &codeText, std::stri
         std::shared_ptr<peg::Ast> ast;
         ret = parse_code(codeText, peg, codeErrors, ast);
         if (ast) {
-            astOptimizedText = peg::ast_to_s(peg.optimize_ast(ast, opt_mode));
+            auto optimized = optimize(ast);
+            astOptimizedText = peg::ast_to_s(optimized);
         }
     }
 
@@ -68,10 +98,10 @@ int main(int argc, const char **argv) {
     }
 
     int pos = 1;
-    bool verbose = false;
+    bool verbose = true;
 
-    if (argv[pos][0] == '-' && argv[pos][1] == 'v') {
-        verbose = true;
+    if (argv[pos][0] == '-' && argv[pos][1] == 'q') {
+        verbose = false;
         pos++;
     }
 
@@ -94,7 +124,7 @@ int main(int argc, const char **argv) {
         std::cout << "Code:" << std::endl << code << std::endl;
     }
 
-    auto rc = lint(grammar, code, fileName, result, true);
+    auto rc = lint(grammar, code, fileName, result);
 
     if (verbose) {
         if (rc) {
