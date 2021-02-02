@@ -69,7 +69,10 @@ static std::set<std::string> unsafe_parents { "TypeArguments",
                                               "NamedRange",
                                               "Comprehension",
                                               "ComprPipeline",
-                                              "TupleConstruction"};
+                                              "TupleConstruction",
+                                              "MatchCase",
+                                              "ArrayElements",
+                                              };
 
 template <typename T>
 std::shared_ptr<T> optimize(bool optimize_unsafe,

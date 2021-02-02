@@ -120,8 +120,8 @@ NamedAssignmentList <- NamedAssignment (Comma NamedAssignment)*
 NamedAssignment <- Name Eq Expression
 ValueReference <- QualifiedName Invoke* BitOr
 
-ArrayConstruction <- LSqB (Expression (Comma Expression)*)? RSqB
-
+ArrayConstruction <- LSqB ArrayElements? RSqB
+ArrayElements <- Expression (Comma Expression)* Comma?
 Iterable <- Comprehension / OpenRange
 OpenRange <- NumLiteral SequenceSign NumLiteral?
 # Distinguish comprehension types separately

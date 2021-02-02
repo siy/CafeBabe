@@ -10,6 +10,19 @@ fn main() {
         if (i == 30) {
             return -1;
         }
+
+
+        match(i) {
+            Int -> "This is integer ${i}";
+            <A, B> -> "Class or tuple consisting of two components with types A and B";
+        }
+
+        val text = match(i) {
+            Int -> "This is integer ${i}";
+            <A, B> -> "Class or tuple consisting of two components with types A and B";
+        };
+
+        val testResult = if (i == 10) {true;} else {false;};
     }
 
     return 0;
