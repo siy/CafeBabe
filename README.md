@@ -56,7 +56,9 @@ Below listed some key features:
  - Sequence comprehension
  - String interpolation
  - Named arguments
- - Duck typing (?)
+ - Duck typing
+ - Data structure isomorphism
+ - Structural type test
 
 ## Code Organization
 The application consists of one or more source files aka compilation units. 
@@ -254,21 +256,30 @@ fn add(a, b) = a + b; //all types inferred
 <R:Number> R add(R a, R b) = a + b; //type bounds, all types explicit 
 ```
 
-#### Lambdas
-
-```
-```
-
 ### Unsafe code
+Unsafe code is placed in dedicated `unsafe` block:
+
+```
+unsafe {
+    fn unsafeOps() {
+    }
+}
+```
+The code inside unsafe block manages memory manually and enables address arithmetic for references.
+
 
 ## Variadic templates
-Variadic templates using fold expansions of following 4 types:
+Variadic templates is a feature which enables creation of generic types with variable number of 
+type arguments. Such a templates are types which use fold expressions to describe code which should be instantiated
+at compile time for given number of type parameters.
+
+Variadic templates are using fold expansions of following 4 types:
 - ( E op ... ) unary right fold -> (E1 op (... op (EN-1 op EN)))
 - ( ... op E ) unary left fold -> (((E1 op E2) op ...) op EN)
 - ( E op ... op I ) binary right fold -> (E1 op (... op (EN−1 op (EN op I))))
 - ( I op ... op E ) binary left fold -> ((((I op E1) op E2) op ...) op EN)
 
-Variadic templates for types:
+Variadic templates for types example:
 ```
 type FN<R, T, ...> = T ->... R;
 
@@ -277,7 +288,7 @@ type Tuple<T, ...> = class (T value, ...) {
     R map(FN<R, T, ...> mapper) = mapper(value, ...);
 }
 ```
-Variadic templates for functions
+Variadic templates for functions example:
 ```
 Mapper<T, ...> allOf(Result<T> value, ...) {
     // Binary right fold expansion with nested unary right fold expansion
@@ -291,7 +302,7 @@ Mapper<T, ...> allOf(Result<T> value, ...) {
 }
 ```
 
-### Ranges, Sequences and iterables
+## Ranges, Sequences and iterables
 Simple ranges:
 ```
 const val q = 1..100;
@@ -359,4 +370,52 @@ Another approach is to use destructuring:
 ```
 val (head, tail) = three;
 val four = ((5), tail);
+```
+
+## Duck Typing
+
+
+```
+```
+
+## Data Structure isomorphism and Structural Type Test 
+This feature enables handling of classes and tuples with identical internal structure as the same type. 
+For example, if there is a function which accepts the class as a parameter, one can pass tuple insteat of class
+given tuple contains values of same type and same order as the required class:
+```
+type Person = class (String first, String last, Int age);
+
+fn printPerson(Person person) {
+    println(F"${person.first} ${person.last}, age ${person.age}");
+}
+
+fn main() {
+    var john = Person { first = "John", last = "Hobson", age = 81 };
+
+    printPerson(john);
+    
+    var otherPerson = ("Peter", "Smith", 54);
+    
+    printPerson(otherPerson); //allowed, structure is identical
+}
+
+```
+Note that function call parameters can be considered a tuple as well (both even have same notation). This does 
+mean, that it is allowed to pass tuple or class instead of function parameters given tuple or class contains 
+values of same type and same order as the function parameters:
+
+```
+fn printPerson(String first, String last, Int age) {
+    println(F"${first} ${last}, age ${age}");
+}
+
+fn main() {
+    var john = Person { first = "John", last = "Hobson", age = 81 };
+
+    printPerson(john);
+    
+    var otherPerson = ("Peter", "Smith", 54);
+    
+    printPerson(otherPerson); //allowed, structure is identical
+}
 ```
