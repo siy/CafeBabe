@@ -8,6 +8,7 @@
 #include <functional>
 #include <fstream>
 #include <sstream>
+#include <set>
 #include <peglib.h>
 
 std::function<void(size_t, size_t, const std::string &)> makeErrorLogger(std::string &errorText) {
@@ -34,28 +35,64 @@ struct lint_result {
     std::string astOptimized;
 };
 
+static std::set<std::string> filter_safe { "__",
+                                           "Semicolon",
+                                           "BlockStart",
+                                           "BlockEnd",
+                                           "LP",
+                                           "RP",
+                                           "SequenceSign"};
+
+static std::set<std::string> filter_if_empty { "OptionalEllipsis" };
+
+static std::set<std::string> filter_unsafe { "Comma",
+                                             "BitOr",
+                                             "LT",
+                                             "GT",
+                                             "Eq",
+                                             "LSqB",
+                                             "RSqB",
+                                             "Arrow",
+                                             "Colon"};
+
+static std::set<std::string> unsafe_parents { "TypeArguments",
+                                              "ImportList",
+                                              "OrType",
+                                              "MethodExpression",
+                                              "Constant",
+                                              "Type",
+                                              "SingleParamLambda",
+                                              "MultiparamLambda",
+                                              "TypeNameList",
+                                              "OptionalEllipsis",
+                                              "ArrayConstruction",
+                                              "NamedRange",
+                                              "Comprehension",
+                                              "ComprPipeline",
+                                              "TupleConstruction"};
+
 template <typename T>
-std::shared_ptr<T> optimize(std::shared_ptr<T> original,
+std::shared_ptr<T> optimize(bool optimize_unsafe,
+                            std::shared_ptr<T> original,
                             std::shared_ptr<T> parent = nullptr) {
 
     auto ast = std::make_shared<T>(*original);
     ast->parent = parent;
     ast->nodes.clear();
     for (auto node : original->nodes) {
-        if (!node->name.compare("__")) {
-            continue;
-        }
-        if (!node->name.compare("Semicolon")) {
-            continue;
-        }
-        if (!node->name.compare("BlockStart")) {
-            continue;
-        }
-        if (!node->name.compare("BlockEnd")) {
+        if (filter_safe.find(node->name) != filter_safe.end()) {
             continue;
         }
 
-        auto child = optimize(node, ast);
+        if (filter_if_empty.find(node->name) != filter_if_empty.end() && node->nodes.empty()) {
+            continue;
+        }
+
+        if (optimize_unsafe && filter_unsafe.find(node->name) != filter_unsafe.end()) {
+            continue;
+        }
+
+        auto child = optimize(unsafe_parents.find(node->name) != unsafe_parents.end(), node, ast);
 
         ast->nodes.push_back(child);
     }
@@ -74,7 +111,7 @@ bool lint(const std::string &grammarText, const std::string &codeText, std::stri
         std::shared_ptr<peg::Ast> ast;
         ret = parse_code(codeText, peg, codeErrors, ast);
         if (ast) {
-            auto optimized = optimize(ast);
+            auto optimized = optimize(true, peg.optimize_ast(ast));
             astOptimizedText = peg::ast_to_s(optimized);
         }
     }

@@ -58,9 +58,9 @@ TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* Optional
 RequiredNameList <- LP <NameList> RP
 ForStatement <- __ 'for' LP VarTitle Name Colon Expression RP MethodBlockBody
 ReturnStatement <- __ 'return' Expression? Semicolon
-IterableStatement <- Iterable RefChain* Semicolon
-RefChain <- CallParameters / MethodCall / Index
-MethodCall <- Dot QualifiedName RefChain?
+IterableStatement <- Iterable Invoke* Semicolon
+Invoke <- CallParameters / MethodCall / Index
+MethodCall <- Dot QualifiedName Invoke?
 
 TypeName <- Name TypeArguments? BitAnd? ArrayDecl*
 ArrayDecl <- LSqB RSqB
@@ -105,7 +105,7 @@ Cast <- LP TypeName RP
 NestedExpr <- LP Expression RP
 MethodReference <- QualifiedName? DoubleColon Name
 
-Value <- (ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName / Iterable / LiteralValue) RefChain* PostfixOps?
+Value <- (ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName / Iterable / LiteralValue) Invoke* PostfixOps?
 LiteralValue <- NumLiteral / CharLiteral / StringLiteral
 Index <- LSqB Expression RSqB
 Lambda <- (SingleParamLambda / MultiparamLambda) Ellipsis? (Expression / MethodBlockBody)
@@ -118,7 +118,7 @@ AnonymousCallParameters <- LP (Expression (Comma Expression)* OptionalEllipsis)?
 ObjConstruction <- TypeName? BlockStart ValueReference? NamedAssignmentList BlockEnd
 NamedAssignmentList <- NamedAssignment (Comma NamedAssignment)*
 NamedAssignment <- Name Eq Expression
-ValueReference <- QualifiedName RefChain* BitOr
+ValueReference <- QualifiedName Invoke* BitOr
 
 ArrayConstruction <- LSqB (Expression (Comma Expression)*)? RSqB
 
