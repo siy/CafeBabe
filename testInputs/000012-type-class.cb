@@ -17,3 +17,5 @@ type Element<T> = class (T value) : Cloneable, ToString {
 // Simple value class (record)
 type Person1 = class (String first, String last, Int age);
 type Person2 = class (String first, String last, Int age) {}
+
+type Person3 = class (var String first, String last, Int age);

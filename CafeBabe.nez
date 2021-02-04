@@ -33,13 +33,11 @@ OptionalNameList = LP {(@NameList)? #OptionalNameList} RP
 ClassDecl = __ 'class' {(@ClassDataDecl)? (@ApiRefs)? (@ClassBlock / Semicolon) #ClassDecl}
 NamedClassDecl = {(@Public)? __ 'class' @TypeName @ClassBody #NamedClassDecl}
 ClassBody = {(@TypedArgDecl)? (@ApiRefs)? @ClassBlock #ClassBody}
-
 TypedArgDecl = LP {(@TypedArgList)? #TypedArgDecl} RP
-
 ClassDataDecl = LP {(@ClassFields)? #ClassDataDecl} RP
 ClassFields = {@ClassField (Comma @ClassField)* @OptionalEllipsis #ClassFields}
-ClassField = __ {('var')? @TypedArgument #ClassField}
-
+ClassField = {(@Mutable)? @TypedArgument #ClassField}
+Mutable = {__ 'var' #Mutable}
 ClassBlock = BlockStart {(@Constant)* (@Constructor)* (@Destructor)? (@StaticMethodImpl / @Function / @MethodImpl)* (@NamedClassDecl)* #ClassBlock} BlockEnd
 StaticMethodImpl = {(@Public)? __ 'static' @MethodSignature @MethodBody #StaticMethodImpl}
 DefaultMethodImpl = __ 'default' {@MethodSignature @MethodBody #DefaultMethodImpl}
@@ -124,7 +122,7 @@ Lambda = {(@SingleParamLambda / @MultiparamLambda) Ellipsis? (@Expression / @Met
 SingleParamLambda = {(@Name Arrow)+ #SingleParamLambda}
 MultiparamLambda = {(@TypeName)? @CallParameters #MultiparamLambda} Arrow
 
-CallParameters = {@NamedCallParameters/@AnonymousCallParameters #CallParameters}
+CallParameters = {(@TypeArguments)? (@NamedCallParameters/@AnonymousCallParameters) #CallParameters}
 NamedCallParameters = LP {@NamedAssignmentList #NamedCallParameters} RP
 AnonymousCallParameters = LP {(@ExpressionList @OptionalEllipsis)? #AnonymousCallParameters} RP
 ObjConstruction = {(@TypeName)? @ObjConstructionBody #ObjConstruction}

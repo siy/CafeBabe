@@ -1,0 +1,8 @@
+
+fn deepCall(SomeType input) {
+    return input.method()
+                .then
+                .invoke[1]
+                .deeperMethod()
+                .withTypeHint<Option<String>>();
+}
