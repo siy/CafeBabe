@@ -30,10 +30,16 @@ TypedFunction = {@TypeName @Name @TypedArgDecl #TypedFunction}
 UntypedFunction = __ 'fn' {@Name @OptionalNameList #UntypedFunction}
 OptionalNameList = LP {(@NameList)? #OptionalNameList} RP
 
-ClassDecl = __ 'class' {(@TypedArgDecl)? (@ApiRefs)? (@ClassBlock / Semicolon) #ClassDecl}
+ClassDecl = __ 'class' {(@ClassDataDecl)? (@ApiRefs)? (@ClassBlock / Semicolon) #ClassDecl}
 NamedClassDecl = {(@Public)? __ 'class' @TypeName @ClassBody #NamedClassDecl}
 ClassBody = {(@TypedArgDecl)? (@ApiRefs)? @ClassBlock #ClassBody}
+
 TypedArgDecl = LP {(@TypedArgList)? #TypedArgDecl} RP
+
+ClassDataDecl = LP {(@ClassFields)? #ClassDataDecl} RP
+ClassFields = {@ClassField (Comma @ClassField)* @OptionalEllipsis #ClassFields}
+ClassField = __ {('var')? @TypedArgument #ClassField}
+
 ClassBlock = BlockStart {(@Constant)* (@Constructor)* (@Destructor)? (@StaticMethodImpl / @Function / @MethodImpl)* (@NamedClassDecl)* #ClassBlock} BlockEnd
 StaticMethodImpl = {(@Public)? __ 'static' @MethodSignature @MethodBody #StaticMethodImpl}
 DefaultMethodImpl = __ 'default' {@MethodSignature @MethodBody #DefaultMethodImpl}

@@ -27,7 +27,7 @@ Variadic templates and fold expansion are inspired by C++ (C++11 and C++17).
 The approach to memory and resource management is inspired by Rust.
 
 ### Haskell
-The Haskell helped to understand that creating types must be as simple and convenient as possible.
+The Haskell helped to realize how important convenient type construction.
 
 ### Elm
 Elegant and clean syntax for manipulation of immutable classes borrowed almost unchanged from Elm.
