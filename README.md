@@ -378,7 +378,9 @@ val four = ((5), tail);
 ```
 ```
 
-## Data Structure isomorphism and Structural Type Test 
+## Data Structure Isomorphism and Structural Type Test
+
+### Data Structure Isomorphism
 This feature enables handling of classes and tuples with identical internal structure as the same type. 
 For example, if there is a function which accepts the class as a parameter, one can pass tuple insteat of class
 given tuple contains values of same type and same order as the required class:
@@ -396,11 +398,16 @@ fn main() {
     
     var otherPerson = ("Peter", "Smith", 54);
     
-    printPerson(otherPerson); //allowed, structure is identical
+    printPerson((Person) otherPerson); //allowed, structure is identical
 }
 
 ```
-Note that function call parameters can be considered a tuple as well (both even have same notation). This does 
+Same is possible with classes with identical structure. In either case, when "foreign" object is passed, it need to be explicitly casted
+to required type. This way any such structurally compatible conversions remain visible in code. 
+Note that this is might be not a zero cost abstraction - compiler needs to insert thunk which provides required API.
+There is no extra code if class is passed instead of tuple as all tuples have same API.
+
+The function call parameters can be considered a tuple as well (both even have same notation!). This does 
 mean, that it is allowed to pass tuple or class instead of function parameters given tuple or class contains 
 values of same type and same order as the function parameters:
 
@@ -419,3 +426,30 @@ fn main() {
     printPerson(otherPerson); //allowed, structure is identical
 }
 ```
+Such a invocations generate no extra code comparing to passing parameters manually from specified structure or tuple.
+
+### Structural Type Test
+It's not just possible to use structurally identical classes and tuples interchangeably. It also possible to check variable if it 
+holds class or tuple with specified structure. This is possible in the same cases when it's possible to check type, i.e. `isA` check
+and pattern matching:
+```
+fn main() {
+    val a = someFunction();
+
+    if (a isA <A>) {
+        println("a has structure <A>");
+    }
+
+    if (a isA <A, B>) {
+        println("a has structure <A, B>");
+    }
+
+    val id = match(a) {
+        A -> 1;         // a has type A
+        B -> 2;         // a has type B
+        <A> -> 3;       // a has structure <A>
+        <A, B> -> 4;    // a has structure <A,B>
+    }
+}
+```
+
