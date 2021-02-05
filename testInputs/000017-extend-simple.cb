@@ -1,4 +1,4 @@
-pub extend Bool : toString {
+pub extend Option : toString {
     impl toString() = match (this) {
         Nothing -> "Nothing";
         Just -> "${this.value()}";
