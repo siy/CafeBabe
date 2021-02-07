@@ -1,21 +1,21 @@
-Program = {(@Use)* @Commons (@Unsafe)* (@Test)* #Program}
+Program = {(@Use)* (@Commons)? (@Unsafe)* (@Test)* #Program}
 Commons = {(@Constant)* (@Type)* (@Extension)* (@Function)* #Commons}
-Use = __ 'use' {@QualifiedName (@ImportList)? #Use} Semicolon
-Constant = {(@Public)? __ 'const' (__ 'val' / @TypeName) @Name Eq @Expression #Constant} Semicolon
-Type = {(@AnnotationRef)* (@Public)? __ 'type' @TypeName Eq (ApiDecl / @AnnotationDecl / @TypeAliasDecl / @CompoundTypeDecl / @TupleDecl / @ClassDecl) #Type}
-Extension = {(@Public)? __ 'extend' @TypeName (@ApiRefs)? @ClassBlock #Extension}
+Use = whitespace 'use' {@QualifiedName (@ImportList)? #Use} Semicolon
+Constant = {(@Public)? whitespace 'const' (whitespace 'val' / @TypeName) @Name whitespace '=' @Expression #Constant} Semicolon
+Type = {(@AnnotationRef)* (@Public)? whitespace 'type' @TypeName whitespace '=' (ApiDecl / @AnnotationDecl / @TypeAliasDecl / @CompoundTypeDecl / @TupleDecl / @ClassDecl) #Type}
+Extension = {(@Public)? whitespace 'extend' @TypeName (@ApiRefs)? @ClassBlock #Extension}
 Function = {(@AnnotationRef)* (@Public)? @MethodSignature @MethodBody #Function}
-Unsafe = __ 'unsafe' BlockStart {@Commons (@Test)* #Unsafe} BlockEnd
-Test = __ 'test' BlockStart {@Commons (@Unsafe)* #Test} BlockEnd
+Unsafe = whitespace 'unsafe' BlockStart {(@Commons)? (@Test)* #Unsafe} BlockEnd
+Test = whitespace 'test' BlockStart {(@Commons)? (@Unsafe)* #Test} BlockEnd
 
 ImportList = BlockStart {@NameWithAlias (Comma @NameWithAlias)* #ImportList} BlockEnd
-NameWithAlias = {@Name (__ 'as'  @Name)? #NameWithAlias}
-AnnotationRef = __ '@' {@Name (LP (@ExpressionList)? RP)? #AnnotationRef}
+NameWithAlias = {@Name (whitespace 'as'  @Name)? #NameWithAlias}
+AnnotationRef = whitespace '@' {@Name (LP (@ExpressionList)? RP)? #AnnotationRef}
 ExpressionList = {@Expression (Comma @Expression)* #ExpressionList}
 TupleDecl = LP {(@TypeName)? (Comma @TypeName)* (@OptionalEllipsis)? #TupleDecl} RP Semicolon
-ApiDecl = __ 'api' @CommonApiBody
+ApiDecl = whitespace 'api' @CommonApiBody
 TypeAliasDecl = {@ArgumentType #TypeAliasDecl} Semicolon
-AnnotationDecl = __ 'annotation' {@TypedArgDecl @AnnotationBody #AnnotationDecl}
+AnnotationDecl = whitespace 'annotation' {@TypedArgDecl @AnnotationBody #AnnotationDecl}
 AnnotationBody = BlockStart {(@Statement)* #AnnotationBody} BlockEnd
 CompoundTypeDecl = {(@AndType / @OrType)? (Semicolon / @CommonApiDecl) #CompoundTypeDecl}
 AndType = {@TypeName (Comma @TypeName)+ #AndType}
@@ -27,52 +27,52 @@ ApiRefs = Colon {@TypeNameList #ApiRefs}
 CommonApiBody = BlockStart { (@Constant)* ((@MethodSignature Semicolon) / @StaticMethodImpl / @DefaultMethodImpl)* (@NamedClassDecl)* #CommonApiBody} BlockEnd
 MethodSignature = {(@TypeVarsDecl)? (@TypedFunction/@UntypedFunction) #MethodSignature}
 TypedFunction = {@TypeName @Name @TypedArgDecl #TypedFunction}
-UntypedFunction = __ 'fn' {@Name @OptionalNameList #UntypedFunction}
+UntypedFunction = whitespace 'fn' {@Name @OptionalNameList #UntypedFunction}
 OptionalNameList = LP {(@NameList)? #OptionalNameList} RP
 
-ClassDecl = __ 'class' {(@ClassDataDecl)? (@ApiRefs)? (@ClassBlock / Semicolon) #ClassDecl}
-NamedClassDecl = {(@Public)? __ 'class' @TypeName @ClassBody #NamedClassDecl}
+ClassDecl = whitespace 'class' {(@ClassDataDecl)? (@ApiRefs)? (@ClassBlock / Semicolon) #ClassDecl}
+NamedClassDecl = {(@Public)? whitespace 'class' @TypeName @ClassBody #NamedClassDecl}
 ClassBody = {(@TypedArgDecl)? (@ApiRefs)? @ClassBlock #ClassBody}
 TypedArgDecl = LP {(@TypedArgList)? #TypedArgDecl} RP
 ClassDataDecl = LP {(@ClassFields)? #ClassDataDecl} RP
 ClassFields = {@ClassField (Comma @ClassField)* (@OptionalEllipsis)? #ClassFields}
 ClassField = {(@Mutable)? @TypedArgument #ClassField}
-Mutable = {__ 'var' #Mutable}
+Mutable = {whitespace 'var' #Mutable}
 ClassBlock = BlockStart {(@Constant)* (@Constructor)* (@Destructor)? (@StaticMethodImpl / @Function / @MethodImpl)* (@NamedClassDecl)* #ClassBlock} BlockEnd
-StaticMethodImpl = {(@Public)? __ 'static' @MethodSignature @MethodBody #StaticMethodImpl}
-DefaultMethodImpl = __ 'default' {@MethodSignature @MethodBody #DefaultMethodImpl}
+StaticMethodImpl = {(@Public)? whitespace 'static' @MethodSignature @MethodBody #StaticMethodImpl}
+DefaultMethodImpl = whitespace 'default' {@MethodSignature @MethodBody #DefaultMethodImpl}
 Constructor = {(@Public)? @Name @TypedArgDecl @MethodBody #Constructor}
-Destructor = {(@Public)? __ '#' @Name LP RP @MethodBody #Destructor}
-Public = __ {'pub' #Public}
+Destructor = {(@Public)? whitespace '#' @Name LP RP @MethodBody #Destructor}
+Public = whitespace {'pub' #Public}
 
-MethodImpl = __ 'impl' {@Name @OptionalNameList @MethodBody #MethodImpl}
+MethodImpl = whitespace 'impl' {@Name @OptionalNameList @MethodBody #MethodImpl}
 MethodBody = {@MethodExpression / @MethodBlockBody #MethodBody}
-MethodExpression = Eq {@Expression #MethodExpression} Semicolon
+MethodExpression = whitespace '=' {@Expression #MethodExpression} Semicolon
 
 MethodBlockBody = BlockStart {(@Statement)*} BlockEnd
 Statement = {@ForStatement / @IfExpression / @SelectExpression / @MatchExpression / @ReturnStatement  / @BreakStatement / @ContinueStatement / @VariableDeclaration / @Assignment / @IterableStatement / @MethodBlockBody / @ValueStatement #Statement}
-BreakStatement = __ {'break' #BreakStatement} Semicolon
-ContinueStatement = __ {'continue' #ContinueStatement} Semicolon
+BreakStatement = whitespace {'break' #BreakStatement} Semicolon
+ContinueStatement = whitespace {'continue' #ContinueStatement} Semicolon
 ValueStatement = {@Value #ValueStatement} Semicolon
 VariableDeclaration = {@VarTitle @Assignment #VariableDeclaration}
-VarTitle = __ {('val' / 'var' / @TypeName) #VarTitle}
+VarTitle = whitespace {('val' / 'var' / @TypeName) #VarTitle}
 Assignment = {@AssignmentExpr #Assignment} Semicolon
 AssignmentExpr = {@RegularAssignment / @ParallelAssignment #AssignmentExpr}
-RegularAssignment = {@QualifiedName @AssignOps @Expression #RegularAssignment}
-ParallelAssignment = {@RequiredNameList Eq (@TupleConstruction / @Expression) #ParallelAssignment}
+RegularAssignment = {@QualifiedName AssignOps @Expression #RegularAssignment}
+ParallelAssignment = {@RequiredNameList whitespace '=' (@TupleConstruction / @Expression) #ParallelAssignment}
 TupleConstruction = LP {(@ValueReference)? (@Expression)? (Comma @Expression)* (@OptionalEllipsis)? #TupleConstruction} RP
 RequiredNameList = LP {@NameList #RequiredNameList} RP
-ForStatement = __ 'for' {@ForSetup @MethodBlockBody #ForStatement}
+ForStatement = whitespace 'for' {@ForSetup @MethodBlockBody #ForStatement}
 ForSetup = LP {@VarTitle @Name Colon @Expression #ForSetup} RP
-ReturnStatement = __ {'return' (@Expression)? #ReturnStatement} Semicolon
+ReturnStatement = whitespace {'return' (@Expression)? #ReturnStatement} Semicolon
 IterableStatement = {@Iterable (@Invoke)* #IterableStatement} Semicolon
 Invoke = {@CallParameters / @MethodCall / @Index #Invoke}
-MethodCall = {Dot @QualifiedName (@Invoke)? #MethodCall}
+MethodCall = {whitespace '.' @QualifiedName (@Invoke)? #MethodCall}
 
 TypeName = {@Name (@TypeArguments)? BitAnd? (@ArrayDecl)* #TypeName}
 ArrayDecl = LSqB {`[]` #ArrayDecl} RSqB
-TypeArguments = LT {@TypeNameList (@OptionalEllipsis)? #TypeArguments} GT
-TypeVarsDecl = LT {@LimitedTypeName (Comma @LimitedTypeName)* #TypeVarsDecl} GT
+TypeArguments = whitespace '<' {@TypeNameList (@OptionalEllipsis)? #TypeArguments} whitespace '>'
+TypeVarsDecl = whitespace '<' {@LimitedTypeName (Comma @LimitedTypeName)* #TypeVarsDecl} whitespace '>'
 LimitedTypeName = {@Name (Colon @TypeName ('+'/'-')?)? #LimitedTypeName}
 TypeNameList = {@TypeName (Comma @TypeName)* #TypeNameList}
 TypedArgList = {@TypedArgument (Comma @TypedArgument)* (@OptionalEllipsis)? #TypedArgList}
@@ -81,19 +81,19 @@ ArgumentType = {@TypeName (Arrow Ellipsis? @TypeName)* #ArgumentType}
 NameList = {@Name (Comma @Name)* #NameList}
 
 Expression = {@IfExpression / @SelectExpression / @MatchExpression / @TernaryExpression / @Expr #Expression}
-IfExpression = __ 'if' {@BooleanExpression @MethodBlockBody (__ 'else' @MethodBlockBody)? #IfExpression}
+IfExpression = whitespace 'if' {@BooleanExpression @MethodBlockBody (whitespace 'else' @MethodBlockBody)? #IfExpression}
 
-SelectExpression = __ 'select' {@NestedExpr @SelectBody #SelectExpression}
+SelectExpression = whitespace 'select' {@NestedExpr @SelectBody #SelectExpression}
 SelectBody = BlockStart {(@SelectCase)* (@Default)? #SelectBody} BlockEnd
 
-MatchExpression = __ 'match' {@NestedExpr @MatchBody #MatchExpression}
+MatchExpression = whitespace 'match' {@NestedExpr @MatchBody #MatchExpression}
 MatchBody = BlockStart {(@MatchCase)* (@Default)? #MatchBody} BlockEnd
 
-TernaryExpression = {@NestedExpr QuestMark @Expression Colon @Expression #TernaryExpression}
+TernaryExpression = {@NestedExpr whitespace '?' @Expression Colon @Expression #TernaryExpression}
 BooleanExpression = LP {@Expression #BooleanExpression} RP
-SelectCase = __ 'case' {CaseExpr Arrow @Expression #SelectCase} Semicolon
+SelectCase = whitespace 'case' {CaseExpr Arrow @Expression #SelectCase} Semicolon
 MatchCase = {@TypeConstructor Arrow @Expression #MatchCase} Semicolon
-Default = __ 'default' Arrow {@Expression #Default} Semicolon
+Default = whitespace 'default' Arrow {@Expression #Default} Semicolon
 CaseExpr = @NumLiteral / @StringLiteral / @ObjConstruction
 TypeConstructor = {@TypeName / @TypeArguments #TypeConstructor}
 
@@ -105,7 +105,7 @@ BitwiseXor = {@BitwiseAnd (BitAnd @BitwiseAnd)* #BitwiseXor}
 BitwiseAnd = {@Equality (EqualityOps @Equality)? #BitwiseAnd}
 Equality = {@Compare (@Comparison / @TypeCheck)? #Equality}
 Comparison = {CompareOps @Compare #Comparison}
-TypeCheck = __ 'isA' {@TypeConstructor #TypeCheck}
+TypeCheck = whitespace 'isA' {@TypeConstructor #TypeCheck}
 
 Compare = {@Shift (ShiftOps @Shift)* #Compare}
 Shift = {@Sum (SumOps @Sum)* #Shift}
@@ -113,9 +113,9 @@ Sum = {@Product (MulOps @Product)* #Sum}
 Product = {(@Cast / UnaryOps)* (@MethodReference / @Value / @NestedExpr / Ellipsis) #Product}
 Cast = LP {@TypeName #Cast} RP
 NestedExpr = LP {@Expression #NestedExpr} RP
-MethodReference = {(@QualifiedName)? DoubleColon @Name #MethodReference}
+MethodReference = {(@QualifiedName)? whitespace '::' @Name #MethodReference}
 
-Value = {(@ObjConstruction / @ArrayConstruction / @TupleConstruction / @Lambda / @QualifiedName / @Iterable / @LiteralValue) (@Invoke)* (@PostfixOps)? #Value}
+Value = {(@ObjConstruction / @ArrayConstruction / @TupleConstruction / @Lambda / @QualifiedName / @Iterable / @LiteralValue) (@Invoke)* PostfixOps? #Value}
 LiteralValue = {@NumLiteral / @CharLiteral / @StringLiteral #LiteralValue}
 Index = LSqB {@Expression #Index} RSqB
 Lambda = {(@SingleParamLambda / @MultiparamLambda) Ellipsis? (@Expression / @MethodBlockBody) #Lambda}
@@ -128,71 +128,65 @@ AnonymousCallParameters = LP {(@ExpressionList (@OptionalEllipsis)?)? #Anonymous
 ObjConstruction = {(@TypeName)? @ObjConstructionBody #ObjConstruction}
 ObjConstructionBody = BlockStart {(@ValueReference)? @NamedAssignmentList #ObjConstructionBody} BlockEnd
 NamedAssignmentList = {@NamedAssignment (Comma @NamedAssignment)* #NamedAssignmentList}
-NamedAssignment = {@Name Eq @Expression #NamedAssignment}
+NamedAssignment = {@Name whitespace '=' @Expression #NamedAssignment}
 ValueReference = {@QualifiedName (@Invoke)* #ValueReference} BitOr
 
 ArrayConstruction = LSqB {(@ArrayElements)? #ArrayConstruction}RSqB
 ArrayElements = {@ExpressionList #ArrayElements} Comma?
 Iterable = {@Comprehension / @OpenRange #Iterable}
-OpenRange = {@NumLiteral SequenceSign (@NumLiteral)? #OpenRange}
+OpenRange = {@NumLiteral whitespace '..' (@NumLiteral)? #OpenRange}
 Comprehension = LSqB {@NamedRange ((Comma / BitOr) @NamedRange)* @ComprPipeline #Comprehension} RSqB
 NamedRange = {@Name Colon @OpenRange #NamedRange}
 ComprPipeline = Arrow {@Expression (BitOr @Expression)* #ComprPipeline}
 
-SumOps = __ ('+'/'-')
-MulOps = __ ('*' / '/' / '%')
-UnaryOps = __ ('-' / '+' / '--' / '++' / '!' / '~')
-PostfixOps = __ {('--' / '++') #PostfixOps}
-AssignOps = __ {(Eq / '+=' / '-=' / '^=' / '|=' / '&=' ) #AssignOps}
-EqualityOps = __ ('==' / '!=')
-CompareOps = __ ('<=' / '>=' / LT / GT)
-ShiftOps = __ ('<<' / '>>' / '>>>')
+SumOps = whitespace ('+' / '-')
+MulOps = whitespace ('*' / '/' / '%')
+UnaryOps = whitespace ('-' / '+' / '--' / '++' / '!' / '~')
+PostfixOps = whitespace ('--' / '++')
+AssignOps = whitespace ('+=' / '-=' / '^=' / '|=' / '&=' / '=')
+EqualityOps = whitespace ('==' / '!=')
+CompareOps = whitespace ('<=' / '>=' / '<' / '>')
+ShiftOps = whitespace ('<<' / '>>' / '>>>')
 
 NumLiteral = {BasedNumLiteral (@NumSuffix)? #NumLiteral}
 BasedNumLiteral = @HexNumLiteral / @OctNumLiteral / @BinNumLiteral / @FloatNumLiteral / @DecNumLiteral
-HexNumLiteral = __ {'0x' [0-9a-fA-F] [0-9a-fA-F_]* #HexNumLiteral} __
-OctNumLiteral = __ {'0o' [0-7] [0-7_]* #OctNumLiteral} __
-BinNumLiteral = __ {'0b' [01] [01_]* #BinNumLiteral} __
-FloatNumLiteral = __ {DecSegment '.' DecSegment (('e'/'E') ('+' / '-')? DecSegment)? #FloatNumLiteral} __
-DecNumLiteral = __ {DecSegment #DecNumLiteral} __
+HexNumLiteral = whitespace {'0x' [0-9a-fA-F] [0-9a-fA-F_]* #HexNumLiteral} whitespace
+OctNumLiteral = whitespace {'0o' [0-7] [0-7_]* #OctNumLiteral} whitespace
+BinNumLiteral = whitespace {'0b' [01] [01_]* #BinNumLiteral} whitespace
+FloatNumLiteral = whitespace {DecSegment '.' DecSegment (('e'/'E') ('+' / '-')? DecSegment)? #FloatNumLiteral} whitespace
+DecNumLiteral = whitespace {DecSegment #DecNumLiteral} whitespace
 DecSegment = [0-9][0-9_]*
-
 NumSuffix = {'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64' #NumSuffix}
 
-QualifiedName = __ !('F"') {[_$@a-zA-Z] [_$.a-zA-Z0-9]* #QualifiedName} __
-Name = __ !('F"') {[_$@a-zA-Z] [_$a-zA-Z0-9]* #Name} __
-
-CharLiteral = __ {[\'] ('\'' / ![\'] .) [\'] #CharLiteral} __
-
+QualifiedName = whitespace !('F"') {[_$@a-zA-Z] [_$.a-zA-Z0-9]* #QualifiedName} whitespace
+Name = whitespace !('F"') {[_$@a-zA-Z] [_$a-zA-Z0-9]* #Name} whitespace
+CharLiteral = whitespace {[\'] ('\'' / ![\'] .) [\'] #CharLiteral} whitespace
 StringLiteral = {@InterpolatedStringLiteral / (@StringSegment)+ #StringLiteral}
-StringSegment = __ '"' {('\\"' / !'"' .)* #StringSegment} '"' __
-InterpolatedStringLiteral = __ 'F"' {('\\"' / !'"' .)* #InterpolatedStringLiteral} '"' __
+StringSegment = whitespace '"' {('\\"' / !'"' .)* #StringSegment} '"' whitespace
+// Replace it with HereDocu
+// (see https://www.groundai.com/project/a-declarative-extension-of-parsing-expression-grammars-for-recognizing-most-programming-languages/1)
+InterpolatedStringLiteral = whitespace 'F"' {('\\"' / !'"' .)* #InterpolatedStringLiteral} '"' whitespace
 
-Semicolon = __ ';' __
-Ellipsis = __ '...'
-Arrow = __ '->'
-LogicalAnd = __ '&&'
-LogicalOr = __ '||'
-BitAnd = __ '&'
-BitOr = __ '|'
-BitXor = __ '^'
-Comma = __ ','
-BlockStart = __ '{'
-BlockEnd = __ '}' __
-SequenceSign = __ '..'
-LP = __ '('
-RP = __ ')'
-LSqB = __ '['
-RSqB = __ ']'
-Dot = __ '.'
-Colon = __ ':'
-DoubleColon = __ '::'
-Eq = __ '='
-LT = __ '<'
-GT = __ '>'
-QuestMark = __ '?'
-__ = [ \t\r\n]* Comment?
-Comment = '//' (!End .)* &End __?
-End = Eol / Eof
-Eol = '\r\n' / '\n' / '\r'
-Eof = !.
+Semicolon = whitespace ';' whitespace
+Ellipsis = whitespace '...'
+Arrow = whitespace '->'
+LogicalAnd = whitespace '&&'
+LogicalOr = whitespace '||'
+BitAnd = whitespace '&'
+BitOr = whitespace '|'
+BitXor = whitespace '^'
+Comma = whitespace ','
+BlockStart = whitespace '{'
+// Trailing whitespace is necessary to gracefully handle EOF.
+BlockEnd = whitespace '}' whitespace
+LP = whitespace '('
+RP = whitespace ')'
+LSqB = whitespace '['
+RSqB = whitespace ']'
+Colon = whitespace ':'
+
+whitespace = [ \t\r\n]* Comment?
+Comment = '//' (!end .)* &end whitespace?
+end = eol / eof
+eol = '\r\n' / '\n' / '\r'
+eof = !.

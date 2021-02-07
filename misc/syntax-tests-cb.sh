@@ -1,0 +1,1 @@
+find ../testInputs/ -type f | sort | xargs -iarg ./CafeBabe arg
