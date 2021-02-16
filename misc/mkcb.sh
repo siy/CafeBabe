@@ -1,1 +1,1 @@
-nez code -g ../CafeBabe.nez --format c && make CafeBabe CFLAGS='-O3 -DMAIN -DCNEZ_SSE'
+packcc -o CafeBabe ../CafeBabe.peg && make CafeBabe CFLAGS='-O3'

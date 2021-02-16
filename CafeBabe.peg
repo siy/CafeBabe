@@ -1,0 +1,194 @@
+Program <- Use* Commons? Unsafe* Test* __ eof
+Commons <- Constant* Type* Extension* Function*
+Use <- __ 'use' QualifiedName ImportList? Semicolon
+Constant <- Public? __ 'const' (__ 'val' / TypeName) Name __ '=' Expression Semicolon
+Type <- AnnotationRef* Public? __ 'type' TypeName __ '=' (ApiDecl / AnnotationDecl / TypeAliasDecl / CompoundTypeDecl / TupleDecl / ClassDecl)
+Extension <- Public? __ 'extend' TypeName ApiRefs? ClassBlock
+Function <- AnnotationRef* Public? MethodSignature MethodBody
+Unsafe <- __ 'unsafe' BlockStart Commons? Test* BlockEnd
+Test <- __ 'test' BlockStart Commons? Unsafe* BlockEnd
+
+ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
+NameWithAlias <- Name (__ 'as'  Name)?
+AnnotationRef <- __ '@' Name (LP ExpressionList? RP)?
+ExpressionList <- Expression (Comma Expression)*
+TupleDecl <- LP TypeName? (Comma TypeName)* OptionalEllipsis? RP Semicolon
+ApiDecl <- __ 'api' CommonApiBody
+TypeAliasDecl <- ArgumentType Semicolon
+AnnotationDecl <- __ 'annotation' TypedArgDecl AnnotationBody
+AnnotationBody <- BlockStart Statement* BlockEnd
+CompoundTypeDecl <- (AndType / OrType)? (Semicolon / CommonApiDecl)
+AndType <- TypeName (Comma TypeName)+
+OrType <- TypeName (BitOr TypeName)+
+OptionalEllipsis <- Comma Ellipsis
+
+CommonApiDecl <- ApiRefs? CommonApiBody
+ApiRefs <- Colon TypeNameList
+CommonApiBody <- BlockStart  Constant* ((MethodSignature Semicolon) / StaticMethodImpl / DefaultMethodImpl)* NamedClassDecl* BlockEnd
+MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
+TypedFunction <- TypeName Name TypedArgDecl
+UntypedFunction <- __ 'fn' Name OptionalNameList
+OptionalNameList <- LP NameList? RP
+
+ClassDecl <- __ 'class' ClassDataDecl? ApiRefs? (ClassBlock / Semicolon)
+NamedClassDecl <- Public? __ 'class' TypeName ClassBody
+ClassBody <- TypedArgDecl? ApiRefs? ClassBlock
+TypedArgDecl <- LP TypedArgList? RP
+ClassDataDecl <- LP ClassFields? RP
+ClassFields <- ClassField (Comma ClassField)* OptionalEllipsis?
+ClassField <- Mutable? TypedArgument
+Mutable <- __ 'var'
+ClassBlock <- BlockStart Constant* Constructor* Destructor? (StaticMethodImpl / Function / MethodImpl)* NamedClassDecl* BlockEnd
+StaticMethodImpl <- Public? __ 'static' MethodSignature MethodBody
+DefaultMethodImpl <- __ 'default' MethodSignature MethodBody
+Constructor <- Public? Name TypedArgDecl MethodBody
+Destructor <- Public? __ '#' Name LP RP MethodBody
+Public <- __ 'pub'
+
+MethodImpl <- __ 'impl' Name OptionalNameList MethodBody
+MethodBody <- MethodExpression / MethodBlockBody
+MethodExpression <- __ '=' Expression Semicolon
+
+MethodBlockBody <- BlockStart Statement* BlockEnd
+Statement <- ForStatement / IfExpression / SelectExpression / MatchExpression / ReturnStatement  / BreakStatement / ContinueStatement / VariableDeclaration / Assignment / IterableStatement / MethodBlockBody / ValueStatement
+BreakStatement <- __ 'break' Semicolon
+ContinueStatement <- __ 'continue' Semicolon
+ValueStatement <- Value Semicolon
+VariableDeclaration <- VarTitle Assignment
+VarTitle <- __ ('val' / 'var' / TypeName)
+Assignment <- AssignmentExpr Semicolon
+AssignmentExpr <- RegularAssignment / ParallelAssignment
+RegularAssignment <- QualifiedName AssignOps Expression
+ParallelAssignment <- RequiredNameList __ '=' (TupleConstruction / Expression)
+TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* OptionalEllipsis? RP
+RequiredNameList <- LP NameList RP
+ForStatement <- __ 'for' ForSetup MethodBlockBody
+ForSetup <- LP VarTitle Name Colon Expression RP
+ReturnStatement <- __ 'return' Expression? Semicolon
+IterableStatement <- Iterable Invoke* Semicolon
+Invoke <- CallParameters / MethodCall / Index
+MethodCall <- __ '.' QualifiedName Invoke?
+
+TypeName <- Name TypeArguments? BitAnd? ArrayDecl*
+ArrayDecl <- LSqB RSqB
+TypeArguments <- __ '<' TypeNameList OptionalEllipsis? __ '>'
+TypeVarsDecl <- __ '<' LimitedTypeName (Comma LimitedTypeName)* __ '>'
+LimitedTypeName <- Name (Colon TypeName ('+'/'-')?)?
+TypeNameList <- TypeName (Comma TypeName)*
+TypedArgList <- TypedArgument (Comma TypedArgument)* OptionalEllipsis?
+TypedArgument <- ArgumentType Name
+ArgumentType <- TypeName (Arrow Ellipsis? TypeName)*
+NameList <- Name (Comma Name)*
+
+Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / Expr
+IfExpression <- __ 'if' BooleanExpression MethodBlockBody (__ 'else' MethodBlockBody)?
+
+SelectExpression <- __ 'select' NestedExpr SelectBody
+SelectBody <- BlockStart SelectCase* Default? BlockEnd
+
+MatchExpression <- __ 'match' NestedExpr MatchBody
+MatchBody <- BlockStart MatchCase* Default? BlockEnd
+
+TernaryExpression <- NestedExpr __ '?' Expression Colon Expression
+BooleanExpression <- LP Expression RP
+SelectCase <- __ 'case' CaseExpr Arrow Expression Semicolon
+MatchCase <- TypeConstructor Arrow Expression Semicolon
+Default <- __ 'default' Arrow Expression Semicolon
+CaseExpr <- NumLiteral / StringLiteral / ObjConstruction
+TypeConstructor <- TypeName / TypeArguments
+
+Expr <- Or (LogicalOr Or)*
+Or <- And (LogicalAnd And)*
+And <- BitwiseOr (BitOr BitwiseOr)*
+BitwiseOr <- BitwiseXor (BitXor BitwiseXor)*
+BitwiseXor <- BitwiseAnd (BitAnd BitwiseAnd)*
+BitwiseAnd <- Equality (EqualityOps Equality)?
+Equality <- Compare (Comparison / TypeCheck)?
+Comparison <- CompareOps Compare
+TypeCheck <- __ 'isA' TypeConstructor
+
+Compare <- Shift (ShiftOps Shift)*
+Shift <- Sum (SumOps Sum)*
+Sum <- Product (MulOps Product)*
+Product <- (Cast / UnaryOps)* (MethodReference / Value / NestedExpr / Ellipsis)
+Cast <- LP TypeName RP
+NestedExpr <- LP Expression RP
+MethodReference <- QualifiedName? __ '::' Name
+
+Value <- (ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName / Iterable / LiteralValue) Invoke* PostfixOps?
+LiteralValue <- NumLiteral / CharLiteral / StringLiteral
+Index <- LSqB Expression RSqB
+Lambda <- (SingleParamLambda / MultiparamLambda) Ellipsis? (Expression / MethodBlockBody)
+SingleParamLambda <- (Name Arrow)+
+MultiparamLambda <- TypeName? CallParameters Arrow
+
+CallParameters <- TypeArguments? (NamedCallParameters/AnonymousCallParameters)
+NamedCallParameters <- LP NamedAssignmentList RP
+AnonymousCallParameters <- LP (ExpressionList OptionalEllipsis?)? RP
+ObjConstruction <- TypeName? ObjConstructionBody
+ObjConstructionBody <- BlockStart ValueReference? NamedAssignmentList BlockEnd
+NamedAssignmentList <- NamedAssignment (Comma NamedAssignment)*
+NamedAssignment <- Name __ '=' Expression
+ValueReference <- QualifiedName Invoke* BitOr
+
+ArrayConstruction <- LSqB ArrayElements?RSqB
+ArrayElements <- ExpressionList Comma?
+Iterable <- Comprehension / OpenRange
+OpenRange <- NumLiteral __ '..' NumLiteral?
+Comprehension <- LSqB NamedRange ((Comma / BitOr) NamedRange)* ComprPipeline RSqB
+NamedRange <- Name Colon OpenRange
+ComprPipeline <- Arrow Expression (BitOr Expression)*
+
+SumOps <- __ ('+' / '-')
+MulOps <- __ ('*' / '/' / '%')
+UnaryOps <- __ ('-' / '+' / '--' / '++' / '!' / '~')
+PostfixOps <- __ ('--' / '++')
+AssignOps <- __ ('+=' / '-=' / '^=' / '|=' / '&=' / '=')
+EqualityOps <- __ ('==' / '!=')
+CompareOps <- __ ('<=' / '>=' / '<' / '>')
+ShiftOps <- __ ('<<' / '>>' / '>>>')
+
+NumLiteral <- (HexNumLiteral / OctNumLiteral / BinNumLiteral / FloatNumLiteral / DecNumLiteral) NumSuffix?
+HexNumLiteral <- __ '0x' <[0-9a-fA-F] [0-9a-fA-F_]*> __
+OctNumLiteral <- __ '0o' <[0-7] [0-7_]*> __
+BinNumLiteral <- __ '0b' <[01] [01_]*> __
+FloatNumLiteral <- __ <DecSegment '.' DecSegment (('e'/'E') ('+' / '-')? DecSegment)?> __
+DecNumLiteral <- __ <DecSegment> __
+DecSegment <- [0-9][0-9_]*
+NumSuffix <- 'i8' / 'u8' / 'i16' / 'u16' / 'i32' / 'u32' / 'i64' / 'u64' / 'f16' / 'f32' / 'f64'
+
+QualifiedName <- __ !('F"') <[_$@a-zA-Z] [_$.a-zA-Z0-9]*> __
+Name <- __ !('F"') <[_$@a-zA-Z] [_$a-zA-Z0-9]*> __
+CharLiteral <- __ [\'] ('\'' / ![\'] .) [\'] __
+StringLiteral <- InterpolatedStringLiteral / StringSegment+
+StringSegment <- __ '"' < ('\\"' / !'"' .)* > '"' __
+InterpolatedStringLiteral <- __ 'F"' < ('\\"' / !'"' .)* > '"' __
+
+Semicolon <- __ ';' __
+Ellipsis <- __ '...'
+Arrow <- __ '->'
+LogicalAnd <- __ '&&'
+LogicalOr <- __ '||'
+BitAnd <- __ '&'
+BitOr <- __ '|'
+BitXor <- __ '^'
+Comma <- __ ','
+BlockStart <- __ '{'
+BlockEnd <- __ '}'
+LP <- __ '('
+RP <- __ ')'
+LSqB <- __ '['
+RSqB <- __ ']'
+Colon <- __ ':'
+
+__ <- [ \t\r\n]* Comment?
+Comment <- '//' (!end .)* &end __?
+end <- eol / eof
+eol <- '\r\n' / '\n' / '\r'
+eof <- !.
+
+%%
+
+#ifdef MAIN
+
+#endif
