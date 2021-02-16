@@ -16,8 +16,8 @@ include_directories (${CMAKE_BINARY_DIR})
 
 add_custom_command(
    OUTPUT CafeBabe.c CafeBabe.h
-   COMMAND nez code -g ../CafeBabe.nez --format c
-   DEPENDS CafeBabe.nez
+   COMMAND packcc -o CafeBabe ../CafeBabe.peg
+   DEPENDS CafeBabe.peg
 )
 
 add_compile_definitions(UNUSE_MAIN)

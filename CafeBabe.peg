@@ -1,15 +1,15 @@
 Program <- Use* Commons? Unsafe* Test* __ eof
 Commons <- Constant* Type* Extension* Function*
-Use <- __ 'use' QualifiedName ImportList? Semicolon
-Constant <- Public? __ 'const' (__ 'val' / TypeName) Name __ '=' Expression Semicolon
+Use <- __ 'use' QualifiedName ImportList? Semicolon ~{ syntax_error_at(auxil, $0s, $0e); }
+Constant <- Public? __ 'const' (__ 'val' / TypeName) Name __ '=' Expression Semicolon  ~{ syntax_error_at(auxil, $0s, $0e); }
 Type <- AnnotationRef* Public? __ 'type' TypeName __ '=' (ApiDecl / AnnotationDecl / TypeAliasDecl / CompoundTypeDecl / TupleDecl / ClassDecl)
 Extension <- Public? __ 'extend' TypeName ApiRefs? ClassBlock
 Function <- AnnotationRef* Public? MethodSignature MethodBody
 Unsafe <- __ 'unsafe' BlockStart Commons? Test* BlockEnd
 Test <- __ 'test' BlockStart Commons? Unsafe* BlockEnd
 
-ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd
-NameWithAlias <- Name (__ 'as'  Name)?
+ImportList <- BlockStart NameWithAlias (Comma NameWithAlias)* BlockEnd ~{ syntax_error_at(auxil, $0s, $0e); }
+NameWithAlias <- Name (__ 'as'  Name)? ~{ syntax_error_at(auxil, $0s, $0e); }
 AnnotationRef <- __ '@' Name (LP ExpressionList? RP)?
 ExpressionList <- Expression (Comma Expression)*
 TupleDecl <- LP TypeName? (Comma TypeName)* OptionalEllipsis? RP Semicolon
@@ -187,8 +187,69 @@ end <- eol / eof
 eol <- '\r\n' / '\n' / '\r'
 eof <- !.
 
-%%
+%auxil "input_reader_t*"
+%header {
+typedef struct {
+    const char* input;
+    const char* ptr;
+    char err_text[1024];
+} input_reader_t;
 
+#define PCC_GETCHAR(auxil)  read_input(auxil)
+#define PCC_ERROR(auxil)
+}
+
+%source {
+#include <stdarg.h>
+
+static int read_input(input_reader_t* source){
+    if (!*source->ptr) {
+        return -1;
+    }
+    return *source->ptr++;
+}
+
+static void syntax_error_at(input_reader_t* source, int start_pos, int end_pos) {
+    const unsigned char* p = source->input + start_pos;
+    const unsigned char* line = source->input + end_pos;
+    int row = 1;
+    int col = 1;
+
+    while(p != line) {
+        if (*p == '\n') {
+            row++;
+            col = 1;
+        } else {
+            col++;
+        }
+        p++;
+    }
+
+    fprintf(stderr, "Error at %d:%d\n", row, col);
+    fputs(" > ", stderr);
+    p = source->input + start_pos;
+    while(p != line) {
+        fputc(*p++, stderr);
+    }
+
+    fputc('[', stderr);
+
+    while(*p && *p != '\n' && *p != '\r') {
+        fputc(*p++, stderr);
+    }
+
+    fputs("]\n---", stderr);
+    p = source->input + start_pos;
+    while(p++ != line) {
+        fputc('-', stderr);
+    }
+    fprintf(stderr, "^--- syntax error\n");
+}
+
+}
+
+%%
 #ifdef MAIN
+
 
 #endif

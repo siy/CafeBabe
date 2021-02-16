@@ -1,1 +1,0 @@
-find ./testInputs/ -type f | sort | xargs -iarg nez parse -g CafeBabe.nez arg

@@ -11,76 +11,89 @@
 #include <set>
 #include <chrono>
 #include <iostream>
-#include <CafeBabe.h>
 #include <cstring>
 
-class tree_holder {
-    Tree *ptr;
-public:
-    tree_holder(Tree* ptr_){
-        this->ptr = ptr_;
-    }
-    ~tree_holder() {
-        cnez_free(ptr);
-    }
+#include <CafeBabe.h>
 
-    Tree* tree() {
-        return ptr;
-    }
-};
+//class tree_holder {
+//    Tree *ptr;
+//public:
+//    tree_holder(Tree* ptr_){
+//        this->ptr = ptr_;
+//    }
+//    ~tree_holder() {
+//        cnez_free(ptr);
+//    }
+//
+//    Tree* tree() {
+//        return ptr;
+//    }
+//};
+//
+//class AstNode {
+//    std::string name;
+//    std::string text;
+//    std::vector<AstNode> children;
+//    bool _is_failure;
+//public:
+//    AstNode(Tree* node):name(CafeBabe_tag(node->tag)), text(node->text, node->text + node->len), _is_failure(false) {
+//        for(size_t i = 0; i < node->size; i++) {
+//            children.emplace_back(node->childs[i]);
+//        }
+//    }
+//
+//    AstNode():_is_failure(true) {
+//    }
+//
+//    template<typename T>
+//    const AstNode& dump(T& out) {
+//        dump(out, 0);
+//        out << std::endl;
+//        return *this;
+//    }
+//
+//    bool isFailure() {
+//        return _is_failure;
+//    }
+//
+//private:
+//    template<typename T> void dump(T& out, int depth) {
+//        out << std::endl;
+//
+//        for(int i = 0; i < depth; i++) {
+//            out << ' ';
+//        }
+//
+//        out << "[#" << this->name;
+//
+//        if(this->children.empty()) {
+//            out << " '" << this->text << "'";
+//        } else {
+//            for(auto child : children) {
+//                out << " ";
+//                child.dump(out, depth + 1);
+//            }
+//        }
+//        out << "]";
+//    }
+//};
 
-class AstNode {
-    std::string name;
-    std::string text;
-    std::vector<AstNode> children;
-    bool _is_failure;
-public:
-    AstNode(Tree* node):name(CafeBabe_tag(node->tag)), text(node->text, node->text + node->len), _is_failure(false) {
-        for(size_t i = 0; i < node->size; i++) {
-            children.emplace_back(node->childs[i]);
-        }
-    }
+//AstNode parse(std::string input) {
+//    auto ptr = (Tree*) CafeBabe_parse(input.c_str(), input.size(), nullptr, nullptr, nullptr, nullptr, nullptr);
+//    tree_holder parseResult { ptr};
+//    return parseResult.tree() ? AstNode(parseResult.tree()) : AstNode();
+//}
 
-    AstNode():_is_failure(true) {
-    }
+input_reader_t* create_reader(std::string source) {
+    auto ptr = new input_reader_t ;
+    auto text = strdup(source.data());
+    ptr->ptr = ptr->input = text;
+    return ptr;
+}
 
-    template<typename T>
-    const AstNode& dump(T& out) {
-        dump(out, 0);
-        out << std::endl;
-        return *this;
-    }
-
-    bool isFailure() {
-        return _is_failure;
-    }
-
-private:
-    template<typename T> void dump(T& out, int depth) {
-        out << std::endl;
-
-        for(int i = 0; i < depth; i++) {
-            out << ' ';
-        }
-
-        out << "[#" << this->name;
-
-        if(this->children.empty()) {
-            out << " '" << this->text << "'";
-        } else {
-            for(auto child : children) {
-                out << " ";
-                child.dump(out, depth + 1);
-            }
-        }
-        out << "]";
-    }
-};
-
-AstNode parse(std::string input) {
-    auto ptr = (Tree*) CafeBabe_parse(input.c_str(), input.size(), nullptr, nullptr, nullptr, nullptr, nullptr);
-    tree_holder parseResult { ptr};
-    return parseResult.tree() ? AstNode(parseResult.tree()) : AstNode();
+void destroy_reader(input_reader_t* reader) {
+    free((void *) reader->input);
+    free(reader);
 }
 
 int main(int argc, const char **argv) {
@@ -117,17 +130,22 @@ int main(int argc, const char **argv) {
             std::string input((std::istreambuf_iterator<char>(t)),
                             std::istreambuf_iterator<char>());
 
-            AstNode result = parse(input);
+            auto reader = create_reader(input);
+            auto context = pcc_create(reader);
+            int result = 0;
+            auto rc = pcc_parse(context, &result);
+            pcc_destroy(context);
+            destroy_reader(reader);
 
             if (bench) {
-                std::cout << "Not implemented" << std::endl;
+                std::cout << "rc: " << rc << ", result: " << result << std::endl;
             }
 
-            if (verbose) {
-                result.dump(std::cout);
-            }
+//            if (verbose) {
+//                result.dump(std::cout);
+//            }
 
-            std::cout << argv[i] << " - " << (result.isFailure() ? "FAIL" : "PASS") << std::endl;
+            std::cout << argv[i] << " - " << (rc ? "FAIL" : "PASS") << std::endl;
         }
     }
 }
