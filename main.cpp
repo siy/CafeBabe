@@ -10,142 +10,211 @@
 #include <sstream>
 #include <set>
 #include <chrono>
-#include <iostream>
-#include <cstring>
+#include <peglib.h>
 
-#include <CafeBabe.h>
-
-//class tree_holder {
-//    Tree *ptr;
-//public:
-//    tree_holder(Tree* ptr_){
-//        this->ptr = ptr_;
-//    }
-//    ~tree_holder() {
-//        cnez_free(ptr);
-//    }
-//
-//    Tree* tree() {
-//        return ptr;
-//    }
-//};
-//
-//class AstNode {
-//    std::string name;
-//    std::string text;
-//    std::vector<AstNode> children;
-//    bool _is_failure;
-//public:
-//    AstNode(Tree* node):name(CafeBabe_tag(node->tag)), text(node->text, node->text + node->len), _is_failure(false) {
-//        for(size_t i = 0; i < node->size; i++) {
-//            children.emplace_back(node->childs[i]);
-//        }
-//    }
-//
-//    AstNode():_is_failure(true) {
-//    }
-//
-//    template<typename T>
-//    const AstNode& dump(T& out) {
-//        dump(out, 0);
-//        out << std::endl;
-//        return *this;
-//    }
-//
-//    bool isFailure() {
-//        return _is_failure;
-//    }
-//
-//private:
-//    template<typename T> void dump(T& out, int depth) {
-//        out << std::endl;
-//
-//        for(int i = 0; i < depth; i++) {
-//            out << ' ';
-//        }
-//
-//        out << "[#" << this->name;
-//
-//        if(this->children.empty()) {
-//            out << " '" << this->text << "'";
-//        } else {
-//            for(auto child : children) {
-//                out << " ";
-//                child.dump(out, depth + 1);
-//            }
-//        }
-//        out << "]";
-//    }
-//};
-
-//AstNode parse(std::string input) {
-//    auto ptr = (Tree*) CafeBabe_parse(input.c_str(), input.size(), nullptr, nullptr, nullptr, nullptr, nullptr);
-//    tree_holder parseResult { ptr};
-//    return parseResult.tree() ? AstNode(parseResult.tree()) : AstNode();
-//}
-
-input_reader_t* create_reader(std::string source) {
-    auto ptr = new input_reader_t ;
-    auto text = strdup(source.data());
-    ptr->ptr = ptr->input = text;
-    return ptr;
+std::function<void(size_t, size_t, const std::string &)> makeErrorLogger(std::string &errorText) {
+    return [&](size_t ln, size_t col, const std::string &msg) mutable {
+        errorText += "  at " + std::to_string(ln) + ":" + std::to_string(col) + "::" + msg + "\n";
+    };
 }
 
-void destroy_reader(input_reader_t* reader) {
-    free((void *) reader->input);
-    free(reader);
+bool parse_grammar(const std::string &text, peg::parser &peg, std::string &errorText) {
+    peg.log = makeErrorLogger(errorText);
+    return peg.load_grammar(text.c_str(), text.size());
 }
+
+bool parse_code(const std::string &text, peg::parser &peg, std::string &errorText, std::shared_ptr<peg::Ast> &ast) {
+    peg.enable_ast();
+    peg.enable_packrat_parsing();
+    peg.log = makeErrorLogger(errorText);
+    return peg.parse_n(text.data(), text.size(), ast);
+}
+
+struct lint_result {
+    std::string grammarErrors;
+    std::string codeErrors;
+    std::string astOptimized;
+};
+
+static std::set<std::string> filter_safe{ // NOLINT(cert-err58-cpp)
+        "__",
+        "BlockEnd",
+        "BlockStart",
+        "LP",
+        "RP",
+        "Semicolon",
+        "SequenceSign"
+};
+
+static std::set<std::string> filter_if_empty{ // NOLINT(cert-err58-cpp)
+        "OptionalEllipsis"
+};
+
+static std::set<std::string> filter_unsafe{ // NOLINT(cert-err58-cpp)
+        "Arrow",
+        "BitOr",
+        "Colon",
+        "Comma",
+        "Eq",
+        "GT",
+        "LSqB",
+        "LT",
+        "RSqB",
+};
+
+static std::set<std::string> unsafe_parents{ // NOLINT(cert-err58-cpp)
+        "ArrayConstruction",
+        "ArrayElements",
+        "Comprehension",
+        "ComprPipeline",
+        "Constant",
+        "ImportList",
+        "MatchCase",
+        "MethodExpression",
+        "MultiparamLambda",
+        "NamedAssignment",
+        "NamedAssignmentList",
+        "NamedRange",
+        "OptionalEllipsis",
+        "OrType",
+        "ParallelAssignment",
+        "SingleParamLambda",
+        "TupleConstruction",
+        "Type",
+        "TypeArguments",
+        "TypeNameList",
+        "ValueReference"
+};
+
+template<typename T>
+std::shared_ptr<T> optimize(bool optimize_unsafe,
+                            std::shared_ptr<T> original,
+                            std::shared_ptr<T> parent = nullptr) {
+
+    auto ast = std::make_shared<T>(*original);
+    ast->parent = parent;
+    ast->nodes.clear();
+    for (auto node : original->nodes) {
+        if (filter_safe.find(node->name) != filter_safe.end()) {
+            continue;
+        }
+
+        if (filter_if_empty.find(node->name) != filter_if_empty.end() && node->nodes.empty()) {
+            continue;
+        }
+
+        if (optimize_unsafe && filter_unsafe.find(node->name) != filter_unsafe.end()) {
+            continue;
+        }
+
+        auto child = optimize(unsafe_parents.find(node->name) != unsafe_parents.end(), node, ast);
+
+        ast->nodes.push_back(child);
+    }
+    return ast;
+}
+
+bool lint(const std::string &grammarText,
+          const std::string &codeText,
+          std::string &fileName,
+          lint_result &result,
+          bool verbose) {
+    std::string grammarErrors;
+    std::string codeErrors = fileName + "\n";
+    std::string astOptimizedText;
+
+    peg::parser peg;
+
+    auto p0 = std::chrono::high_resolution_clock::now();
+    auto ret = parse_grammar(grammarText, peg, grammarErrors);
+    auto p1 = std::chrono::high_resolution_clock::now();
+
+    if (verbose) {
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0);
+        std::cout << "parse grammar: " << duration.count() << "us" << std::endl;
+    }
+
+    if (ret && peg) {
+        std::shared_ptr<peg::Ast> ast;
+        ret = parse_code(codeText, peg, codeErrors, ast);
+        auto p2 = std::chrono::high_resolution_clock::now();
+
+        if (verbose) {
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p2 - p1);
+            std::cout << "parse code: " << duration.count() << "us" << std::endl;
+        }
+
+        if (ast) {
+            auto optimized = optimize(true, peg.optimize_ast(ast));
+            auto p3 = std::chrono::high_resolution_clock::now();
+
+            if (verbose) {
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p3 - p2);
+                std::cout << "optimize AST: " << duration.count() << "us" << std::endl;
+            }
+
+            astOptimizedText = peg::ast_to_s(optimized);
+        }
+    }
+
+    result.grammarErrors = grammarErrors;
+
+    if (!codeErrors.empty()) {
+        result.codeErrors = codeErrors;
+        result.astOptimized = astOptimizedText;
+    }
+
+    return ret;
+}
+
+extern std::string grammarText;
 
 int main(int argc, const char **argv) {
+    if (argc <= 1) {
+        std::cout << "Usage: cbc \"text\" " << std::endl;
+        return -100;
+    }
+
+    int pos = 1;
     bool verbose = false;
-    bool bench = false;
-    int i;
 
-    for (i = 1; i < argc; i++) {
-        if (argv[i][0] != '-') {
-            break;
-        }
+    if (argv[pos][0] == '-' && argv[pos][1] == 'v') {
+        verbose = true;
+        pos++;
+    }
 
-        if (strlen(argv[i]) != 2) {
-            std::cout << "Invalid option" << argv[i] << std::endl;
-        }
+    std::string grammar(grammarText);
+    std::string fileName = argv[pos];
+    std::ifstream ifs2(fileName);
 
-        switch (argv[i][1]) {
-            case 'v': verbose = true; break;
-            case 'b': bench = true; break;
-            default:
-                std::cout << "Unknown option" << argv[i] << ", ignored" << std::endl;
+    if (!ifs2.is_open()) {
+        std::cout << fileName << " MISSING" << std::endl;
+        return -2;
+    }
+
+    std::string code((std::istreambuf_iterator<char>(ifs2)),
+                     (std::istreambuf_iterator<char>()));
+
+    lint_result result;
+
+    if (verbose) {
+        std::cout << "Code:" << std::endl << code << std::endl;
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto rc = lint(grammar, code, fileName, result, verbose);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+
+    if (verbose) {
+        if (rc) {
+            std::cout << "AST:" << std::endl << result.astOptimized << std::endl;
+        } else {
+            std::cout << "Errors: " << std::endl << result.codeErrors << std::endl;
         }
     }
 
-    for(; i < argc; i++) {
-        {
-            std::ifstream t(argv[i]);
+    std::cout << fileName << (rc ? " PASS" : " FAIL") << " in " << duration.count() << "ms" << std::endl;
 
-            if (!t.is_open()) {
-                std::cout << "Unable to open input file " << argv[i] << " FAIL " << std::endl;
-                continue;
-            }
-
-            std::string input((std::istreambuf_iterator<char>(t)),
-                            std::istreambuf_iterator<char>());
-
-            auto reader = create_reader(input);
-            auto context = pcc_create(reader);
-            int result = 0;
-            auto rc = pcc_parse(context, &result);
-            pcc_destroy(context);
-            destroy_reader(reader);
-
-            if (bench) {
-                std::cout << "rc: " << rc << ", result: " << result << std::endl;
-            }
-
-//            if (verbose) {
-//                result.dump(std::cout);
-//            }
-
-            std::cout << argv[i] << " - " << (rc ? "FAIL" : "PASS") << std::endl;
-        }
-    }
+    return rc ? 0 : -1;
 }

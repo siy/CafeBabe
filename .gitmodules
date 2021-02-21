@@ -1,0 +1,3 @@
+[submodule "cpp-peglib"]
+	path = cpp-peglib
+	url = git@github.com:yhirose/cpp-peglib.git

@@ -1,0 +1,1 @@
+cmake --build /home/siy/CLionProjects/CafeBabe/cmake-build-debug --target cbc -- -j 19
