@@ -24,8 +24,6 @@ bool parse_grammar(const std::string &text, peg::parser &peg, std::string &error
 }
 
 bool parse_code(const std::string &text, peg::parser &peg, std::string &errorText, std::shared_ptr<peg::Ast> &ast) {
-    peg.enable_ast();
-    peg.enable_packrat_parsing();
     peg.log = makeErrorLogger(errorText);
     return peg.parse_n(text.data(), text.size(), ast);
 }
@@ -35,6 +33,8 @@ struct lint_result {
     std::string codeErrors;
     std::string astOptimized;
 };
+
+int usage();
 
 static std::set<std::string> filter_safe{ // NOLINT(cert-err58-cpp)
         "__",
@@ -114,107 +114,136 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
     return ast;
 }
 
-bool lint(const std::string &grammarText,
-          const std::string &codeText,
-          std::string &fileName,
-          lint_result &result,
-          bool verbose) {
-    std::string grammarErrors;
-    std::string codeErrors = fileName + "\n";
-    std::string astOptimizedText;
+extern std::string grammarText;
 
+peg::parser load_parser(bool bench) {
+    std::string grammarErrors;
     peg::parser peg;
 
     auto p0 = std::chrono::high_resolution_clock::now();
     auto ret = parse_grammar(grammarText, peg, grammarErrors);
     auto p1 = std::chrono::high_resolution_clock::now();
 
-    if (verbose) {
+    if (bench) {
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0);
-        std::cout << "parse grammar: " << duration.count() << "us" << std::endl;
+        std::cout << "Loading grammar " << duration.count() << "us" << std::endl;
     }
 
-    if (ret && peg) {
-        std::shared_ptr<peg::Ast> ast;
-        ret = parse_code(codeText, peg, codeErrors, ast);
-        auto p2 = std::chrono::high_resolution_clock::now();
-
-        if (verbose) {
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p2 - p1);
-            std::cout << "parse code: " << duration.count() << "us" << std::endl;
-        }
-
-        if (ast) {
-            auto optimized = optimize(true, peg.optimize_ast(ast));
-            auto p3 = std::chrono::high_resolution_clock::now();
-
-            if (verbose) {
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p3 - p2);
-                std::cout << "optimize AST: " << duration.count() << "us" << std::endl;
-            }
-
-            astOptimizedText = peg::ast_to_s(optimized);
-        }
+    if (!ret) {
+        std::cout << "Error loading grammar: " << std::endl << grammarErrors << std::endl;
     }
+    peg.enable_ast();
+    peg.enable_packrat_parsing();
 
-    result.grammarErrors = grammarErrors;
-
-    if (!codeErrors.empty()) {
-        result.codeErrors = codeErrors;
-        result.astOptimized = astOptimizedText;
-    }
-
-    return ret;
+    return peg;
 }
 
-extern std::string grammarText;
+int usage() {
+    std::cout << "Usage: cbc [-v] [-b] file1.ext ... fileN.ext" << std::endl;
+    return -100;
+}
+
+std::shared_ptr<peg::Ast> parse_input(peg::parser peg, const std::string& codeText, const std::string& fileName, bool bench) {
+    std::string grammarErrors;
+    std::string codeErrors = fileName + "\n";
+    std::string astOptimizedText;
+
+    auto p1 = std::chrono::high_resolution_clock::now();
+    std::shared_ptr<peg::Ast> ast;
+    auto ret = parse_code(codeText, peg, codeErrors, ast);
+    auto p2 = std::chrono::high_resolution_clock::now();
+
+    if (bench) {
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p2 - p1);
+        std::cout << fileName << " parsing " << duration.count() << "us" << std::endl;
+    }
+
+    if (ret && ast) {
+        auto optimized = optimize(true, peg.optimize_ast(ast));
+        auto p3 = std::chrono::high_resolution_clock::now();
+
+        if (bench) {
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(p3 - p2);
+            std::cout << fileName << " AST optimization " << duration.count() << "us" << std::endl;
+        }
+
+        return optimized;
+    } else {
+        std::cout << "Syntax errors: " << std::endl << codeErrors << std::endl;
+    }
+
+    return ast;
+}
+
 
 int main(int argc, const char **argv) {
     if (argc <= 1) {
-        std::cout << "Usage: cbc \"text\" " << std::endl;
-        return -100;
+        return usage();
     }
 
     int pos = 1;
     bool verbose = false;
+    bool bench = false;
 
-    if (argv[pos][0] == '-' && argv[pos][1] == 'v') {
-        verbose = true;
+    while (pos < argc && argv[pos][0] == '-') {
+        if (argv[pos][1] == 0 || argv[pos][2] != 0) {
+            std::cout << "Unknown option \"" << argv[pos] << "\"" << std::endl;
+            return -2;
+        }
+
+        switch (argv[pos][1]) {
+            case 'v':
+                verbose = true;
+                break;
+            case 'b':
+                bench = true;
+                break;
+        }
+
         pos++;
     }
 
-    std::string grammar(grammarText);
-    std::string fileName = argv[pos];
-    std::ifstream ifs2(fileName);
-
-    if (!ifs2.is_open()) {
-        std::cout << fileName << " MISSING" << std::endl;
-        return -2;
+    if (pos >= argc) {
+        return usage();
     }
 
-    std::string code((std::istreambuf_iterator<char>(ifs2)),
-                     (std::istreambuf_iterator<char>()));
+    auto peg = load_parser(bench);
+    auto rc = true;
 
-    lint_result result;
+    while (pos < argc) {
+        std::string fileName = argv[pos];
+        std::ifstream ifs2(fileName);
 
-    if (verbose) {
-        std::cout << "Code:" << std::endl << code << std::endl;
-    }
-
-    auto start = std::chrono::high_resolution_clock::now();
-    auto rc = lint(grammar, code, fileName, result, verbose);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-
-    if (verbose) {
-        if (rc) {
-            std::cout << "AST:" << std::endl << result.astOptimized << std::endl;
-        } else {
-            std::cout << "Errors: " << std::endl << result.codeErrors << std::endl;
+        if (!ifs2.is_open()) {
+            std::cout << fileName << " MISSING" << std::endl;
+            return -2;
         }
-    }
 
-    std::cout << fileName << (rc ? " PASS" : " FAIL") << " in " << duration.count() << "ms" << std::endl;
+        auto start = std::chrono::high_resolution_clock::now();
+
+        std::string code((std::istreambuf_iterator<char>(ifs2)),
+                         (std::istreambuf_iterator<char>()));
+
+        auto ast = parse_input(peg, code, fileName, bench);
+        auto stop = std::chrono::high_resolution_clock::now();
+
+        if (ast) {
+            if (verbose) {
+                std::cout << "AST:" << std::endl << peg::ast_to_s(ast) << std::endl;
+            }
+        }
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+        if (bench) {
+            std::cout << fileName << (ast ? " PASS" : " FAIL") << " in " << duration.count() << "us" << std::endl << std::endl;
+        } else {
+            std::cout << fileName << (ast ? " PASS" : " FAIL") << std::endl;
+        }
+
+        rc = rc && ast;
+        pos++;
+    }
 
     return rc ? 0 : -1;
 }

@@ -164,11 +164,7 @@ Name <- !('F"') <[_$@a-zA-Z] [_$a-zA-Z0-9]*>
 CharLiteral <- [\'] <('\'' / ![\'] .)> [\']
 StringLiteral <- InterpolatedStringLiteral / StringSegment+
 StringSegment <- '"' < ('\\"' / !'"' .)* > '"'
-#InterpolatedStringLiteral <- 'F"' < ('\\"' / !'"' .)* > '"'
-InterpolatedStringLiteral <- 'F"(' < (!')"' .)* > ')"'
-#InterpolatedStringLiteral <- 'F"' $tag<(.{0,8})> '(' < (!($tag ')"') .)* > ')"'
-#InterpolatedStringLiteral <- 'F"' $tag<(.{0,8})> '(' <(!$tag .)*> ')' $tag '"'
-#InterpolatedStringLiteral <- 'F"' $tag<(.{0,8})> '(' <(!(')' $tag '"') .)*> ')' $tag '"'
+InterpolatedStringLiteral <- 'F"' $tag<(!'(' .){,8}> '(' < (!(')' $tag '"') .)* > ')' $tag '"'
 
 Semicolon <- ';'
 Ellipsis <- '...'
