@@ -12,38 +12,14 @@
 #include <chrono>
 #include <peglib.h>
 
-std::function<void(size_t, size_t, const std::string &)> makeErrorLogger(std::string &errorText) {
-    return [&](size_t ln, size_t col, const std::string &msg) mutable {
-        errorText += "  at " + std::to_string(ln) + ":" + std::to_string(col) + "::" + msg + "\n";
-    };
-}
-
-bool parse_grammar(const std::string &text, peg::parser &peg, std::string &errorText) {
-    peg.log = makeErrorLogger(errorText);
-    return peg.load_grammar(text.c_str(), text.size());
-}
-
-bool parse_code(const std::string &text, peg::parser &peg, std::string &errorText, std::shared_ptr<peg::Ast> &ast) {
-    peg.log = makeErrorLogger(errorText);
-    return peg.parse_n(text.data(), text.size(), ast);
-}
-
-struct lint_result {
-    std::string grammarErrors;
-    std::string codeErrors;
-    std::string astOptimized;
-};
-
-int usage();
-
 static std::set<std::string> filter_safe{ // NOLINT(cert-err58-cpp)
-        "__",
         "BlockEnd",
         "BlockStart",
         "LP",
         "RP",
         "Semicolon",
-        "SequenceSign"
+        "SequenceSign",
+        "eof"
 };
 
 static std::set<std::string> filter_if_empty{ // NOLINT(cert-err58-cpp)
@@ -94,7 +70,7 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
     auto ast = std::make_shared<T>(*original);
     ast->parent = parent;
     ast->nodes.clear();
-    for (auto node : original->nodes) {
+    for (const auto& node : original->nodes) {
         if (filter_safe.find(node->name) != filter_safe.end()) {
             continue;
         }
@@ -113,15 +89,31 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
     }
     return ast;
 }
+//using Log = std::function<void(size_t, size_t, const std::string &)>;
+//using Walker = std::function<void(const peg::ast &)>;
+
+template<typename T>
+void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &)>) {
+    
+}
 
 extern std::string grammarText;
 
+int usage() {
+    std::cout << "Usage: cbc [-v] [-b] file1.ext ... fileN.ext" << std::endl;
+    return -100;
+}
+
 peg::parser load_parser(bool bench) {
-    std::string grammarErrors;
     peg::parser peg;
 
     auto p0 = std::chrono::high_resolution_clock::now();
-    auto ret = parse_grammar(grammarText, peg, grammarErrors);
+
+    peg.log = [](size_t ln, size_t col, const std::string &msg) mutable {
+        std::cout << "Error in grammar at " << std::to_string(ln) << ":"  << std::to_string(col) << "::" << msg << std::endl;
+    };
+
+    auto ret = peg.load_grammar(grammarText.c_str(), grammarText.size());
     auto p1 = std::chrono::high_resolution_clock::now();
 
     if (bench) {
@@ -130,27 +122,27 @@ peg::parser load_parser(bool bench) {
     }
 
     if (!ret) {
-        std::cout << "Error loading grammar: " << std::endl << grammarErrors << std::endl;
+        std::cout << "Unable to proceed, exiting" << std::endl;
+        exit(-200);
     }
+
     peg.enable_ast();
     peg.enable_packrat_parsing();
 
     return peg;
 }
 
-int usage() {
-    std::cout << "Usage: cbc [-v] [-b] file1.ext ... fileN.ext" << std::endl;
-    return -100;
-}
-
 std::shared_ptr<peg::Ast> parse_input(peg::parser peg, const std::string& codeText, const std::string& fileName, bool bench) {
-    std::string grammarErrors;
     std::string codeErrors = fileName + "\n";
-    std::string astOptimizedText;
 
     auto p1 = std::chrono::high_resolution_clock::now();
+
+    peg.log = [&](size_t ln, size_t col, const std::string &msg) mutable {
+        std::cout << fileName << " error at " << std::to_string(ln) << ":"  << std::to_string(col) << "::" << msg << std::endl;
+    };
+
     std::shared_ptr<peg::Ast> ast;
-    auto ret = parse_code(codeText, peg, codeErrors, ast);
+    auto ret = peg.parse(codeText, ast, fileName.data());
     auto p2 = std::chrono::high_resolution_clock::now();
 
     if (bench) {
@@ -168,8 +160,6 @@ std::shared_ptr<peg::Ast> parse_input(peg::parser peg, const std::string& codeTe
         }
 
         return optimized;
-    } else {
-        std::cout << "Syntax errors: " << std::endl << codeErrors << std::endl;
     }
 
     return ast;
