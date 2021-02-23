@@ -183,7 +183,7 @@ LSqB <- '['
 RSqB <- ']'
 Colon <- ':'
 
-%whitespace <- [ \t\r\n]* / Comment*
+%whitespace <- [ \t\r\n]* Comment?
 Comment <- '//' (!end .)* &end
 end <- eol / eof
 eol <- '\r\n' / '\n' / '\r'

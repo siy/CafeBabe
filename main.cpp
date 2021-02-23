@@ -89,12 +89,27 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
     }
     return ast;
 }
-//using Log = std::function<void(size_t, size_t, const std::string &)>;
-//using Walker = std::function<void(const peg::ast &)>;
 
 template<typename T>
-void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &)>) {
-    
+void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &)> fn) {
+    fn(node);
+
+    for (const auto& child : node->nodes) {
+        walk_ast(child, fn);
+    }
+}
+
+template<typename T>
+void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &, int)> fn, int depth) {
+    fn(node, depth);
+
+    for (const auto& child : node->nodes) {
+        walk_ast(child, fn, depth + 1);
+    }
+}
+
+void print_tree(const std::shared_ptr<peg::Ast>& node, int depth) {
+    std::cout << node->name << std::endl;
 }
 
 extern std::string grammarText;
