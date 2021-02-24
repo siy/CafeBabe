@@ -53,8 +53,8 @@ MethodExpression <- '=' Expression Semicolon
 
 MethodBlockBody <- BlockStart Statement* BlockEnd
 Statement <- ForStatement / IfExpression / SelectExpression / MatchExpression / ReturnStatement  / BreakStatement / ContinueStatement / VariableDeclaration / Assignment / IterableStatement / MethodBlockBody / ValueStatement
-BreakStatement <- 'break' Semicolon
-ContinueStatement <- 'continue' Semicolon
+BreakStatement <- <'break'> Semicolon
+ContinueStatement <- <'continue'> Semicolon
 ValueStatement <- Value Semicolon
 VariableDeclaration <- VarTitle Assignment
 VarTitle <- ('val' / 'var' / TypeName)
@@ -65,7 +65,7 @@ ParallelAssignment <- RequiredNameList '=' (TupleConstruction / Expression)
 TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* OptionalEllipsis? RP
 RequiredNameList <- LP NameList RP
 ForStatement <- 'for' ForSetup MethodBlockBody
-ForSetup <- LP VarTitle Name Colon Expression RP
+ForSetup <- LP VarTitle Name Colon Iterable RP
 ReturnStatement <- 'return' Expression? Semicolon
 IterableStatement <- Iterable Invoke* Semicolon
 Invoke <- CallParameters / MethodCall / Index

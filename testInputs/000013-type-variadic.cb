@@ -5,5 +5,5 @@ type Tuple<T, ...> = class (T value, ...) {
 }
 
 Mapper<T, ...> allOf(Result<T> value, ...) {
-    return () -> { return value.flatMap(vv ->... ok(tuple(vv, ...))); };
+    return () -> { return value.flatMap(vv ->... ok((vv, ...))); };
 }

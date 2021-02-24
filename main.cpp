@@ -39,8 +39,12 @@ static std::set<std::string> filter_unsafe{ // NOLINT(cert-err58-cpp)
 };
 
 static std::set<std::string> unsafe_parents{ // NOLINT(cert-err58-cpp)
+        "AndType",
+        "ApiRefs",
+        "LimitedTypeName",
+        "ClassFields",
         "ArrayConstruction",
-        "ArrayElements",
+        "ExpressionList",
         "Comprehension",
         "ComprPipeline",
         "Constant",
@@ -56,8 +60,10 @@ static std::set<std::string> unsafe_parents{ // NOLINT(cert-err58-cpp)
         "ParallelAssignment",
         "SingleParamLambda",
         "TupleConstruction",
+        "TupleDecl",
         "Type",
         "TypeArguments",
+        "TypedArgList",
         "TypeNameList",
         "ValueReference"
 };
@@ -70,7 +76,7 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
     auto ast = std::make_shared<T>(*original);
     ast->parent = parent;
     ast->nodes.clear();
-    for (const auto& node : original->nodes) {
+    for (const auto &node : original->nodes) {
         if (filter_safe.find(node->name) != filter_safe.end()) {
             continue;
         }
@@ -91,25 +97,32 @@ std::shared_ptr<T> optimize(bool optimize_unsafe,
 }
 
 template<typename T>
-void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &)> fn) {
+void walk_ast(const std::shared_ptr<T> &node, std::function<void(const std::shared_ptr<T> &)> fn) {
     fn(node);
 
-    for (const auto& child : node->nodes) {
+    for (const auto &child : node->nodes) {
         walk_ast(child, fn);
     }
 }
 
 template<typename T>
-void walk_ast(const std::shared_ptr<T>& node, std::function<void(const std::shared_ptr<T> &, int)> fn, int depth) {
+void walk_ast(const std::shared_ptr<T> &node, std::function<void(const std::shared_ptr<T> &, int)> fn, int depth) {
     fn(node, depth);
 
-    for (const auto& child : node->nodes) {
+    for (const auto &child : node->nodes) {
         walk_ast(child, fn, depth + 1);
     }
 }
 
-void print_tree(const std::shared_ptr<peg::Ast>& node, int depth) {
-    std::cout << node->name << std::endl;
+void print_tree(const std::shared_ptr<peg::Ast> &node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        std::cout << "  ";
+    }
+
+    auto name = node->name == node->original_name ? node->name : node->original_name + "/" + node->name;
+    auto prefix = (node->nodes.size() > 0 ? "+ " : "- ");
+
+    std::cout << prefix << name << " (" << node->token << ")" << std::endl;
 }
 
 extern std::string grammarText;
@@ -125,7 +138,8 @@ peg::parser load_parser(bool bench) {
     auto p0 = std::chrono::high_resolution_clock::now();
 
     peg.log = [](size_t ln, size_t col, const std::string &msg) mutable {
-        std::cout << "Error in grammar at " << std::to_string(ln) << ":"  << std::to_string(col) << "::" << msg << std::endl;
+        std::cout << "Error in grammar at " << std::to_string(ln) << ":" << std::to_string(col) << "::" << msg
+                  << std::endl;
     };
 
     auto ret = peg.load_grammar(grammarText.c_str(), grammarText.size());
@@ -147,13 +161,15 @@ peg::parser load_parser(bool bench) {
     return peg;
 }
 
-std::shared_ptr<peg::Ast> parse_input(peg::parser peg, const std::string& codeText, const std::string& fileName, bool bench) {
+std::shared_ptr<peg::Ast>
+parse_input(peg::parser peg, const std::string &codeText, const std::string &fileName, bool bench) {
     std::string codeErrors = fileName + "\n";
 
     auto p1 = std::chrono::high_resolution_clock::now();
 
     peg.log = [&](size_t ln, size_t col, const std::string &msg) mutable {
-        std::cout << fileName << " error at " << std::to_string(ln) << ":"  << std::to_string(col) << "::" << msg << std::endl;
+        std::cout << fileName << " error at " << std::to_string(ln) << ":" << std::to_string(col) << "::" << msg
+                  << std::endl;
     };
 
     std::shared_ptr<peg::Ast> ast;
@@ -234,14 +250,17 @@ int main(int argc, const char **argv) {
 
         if (ast) {
             if (verbose) {
-                std::cout << "AST:" << std::endl << peg::ast_to_s(ast) << std::endl;
+                //std::cout << "AST:" << std::endl << peg::ast_to_s(ast) << std::endl;
+                std::function<void(const std::shared_ptr<peg::Ast> &, int)> fn = print_tree;
+                walk_ast(ast, fn, 0);
             }
         }
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
         if (bench) {
-            std::cout << fileName << (ast ? " PASS" : " FAIL") << " in " << duration.count() << "us" << std::endl << std::endl;
+            std::cout << fileName << (ast ? " PASS" : " FAIL") << " in " << duration.count() << "us" << std::endl
+                      << std::endl;
         } else {
             std::cout << fileName << (ast ? " PASS" : " FAIL") << std::endl;
         }
