@@ -1,1 +1,1 @@
-find ./testInputs/ -type f | sort | xargs -iarg ./cmake-build-release/cbc arg
+find ./testInputs/ -type f | sort | xargs -iarg ./cmake-build-release/cbc $@ arg

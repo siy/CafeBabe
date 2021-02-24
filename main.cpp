@@ -250,7 +250,6 @@ int main(int argc, const char **argv) {
 
         if (ast) {
             if (verbose) {
-                //std::cout << "AST:" << std::endl << peg::ast_to_s(ast) << std::endl;
                 std::function<void(const std::shared_ptr<peg::Ast> &, int)> fn = print_tree;
                 walk_ast(ast, fn, 0);
             }

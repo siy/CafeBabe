@@ -52,13 +52,21 @@ MethodBody <- MethodExpression / MethodBlockBody
 MethodExpression <- '=' Expression Semicolon
 
 MethodBlockBody <- BlockStart Statement* BlockEnd
-Statement <- ForStatement / IfExpression / SelectExpression / MatchExpression / ReturnStatement  / BreakStatement / ContinueStatement / VariableDeclaration / Assignment / IterableStatement / MethodBlockBody / ValueStatement
-BreakStatement <- <'break'> Semicolon
-ContinueStatement <- <'continue'> Semicolon
-ValueStatement <- Value Semicolon
+Statement <- BlockStatement / (ExpressionStatement Semicolon)
+BlockStatement <- ForStatement / IfExpression / SelectExpression / MatchExpression / MethodBlockBody
+ExpressionStatement <- FlowControlStatement / VariableDeclaration / Assignment / IterableStatement / ValueStatement
+FlowControlStatement <- ReturnExpr / Break / Continue
+ReturnExpr <- Return Expression?
+Break <- 'break'
+Continue <- 'continue'
+Return <- 'return'
+
 VariableDeclaration <- VarTitle Assignment
+Assignment <- AssignmentExpr
+ValueStatement <- Value
+IterableStatement <- Iterable Invoke*
+
 VarTitle <- ('val' / 'var' / TypeName)
-Assignment <- AssignmentExpr Semicolon
 AssignmentExpr <- RegularAssignment / ParallelAssignment
 RegularAssignment <- QualifiedName AssignOps Expression
 ParallelAssignment <- RequiredNameList '=' (TupleConstruction / Expression)
@@ -66,8 +74,6 @@ TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* Optional
 RequiredNameList <- LP NameList RP
 ForStatement <- 'for' ForSetup MethodBlockBody
 ForSetup <- LP VarTitle Name Colon Iterable RP
-ReturnStatement <- 'return' Expression? Semicolon
-IterableStatement <- Iterable Invoke* Semicolon
 Invoke <- CallParameters / MethodCall / Index
 MethodCall <- '.' QualifiedName Invoke?
 

@@ -24,7 +24,7 @@ endif()
 add_custom_command(
    OUTPUT grammar.cpp
    COMMAND ../assemble.sh > ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp
-   DEPENDS CafeBabe.packcc
+   DEPENDS CafeBabe.peg
 )
 
 #add_subdirectory(test)
