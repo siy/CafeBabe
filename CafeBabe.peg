@@ -63,7 +63,7 @@ Return <- 'return'
 
 VariableDeclaration <- VarTitle Assignment
 Assignment <- AssignmentExpr
-ValueStatement <- Value
+ValueStatement <- Value 
 IterableStatement <- Iterable Invoke*
 
 VarTitle <- ('val' / 'var' / TypeName)
@@ -73,7 +73,8 @@ ParallelAssignment <- RequiredNameList '=' (TupleConstruction / Expression)
 TupleConstruction <- LP ValueReference? Expression? (Comma Expression)* OptionalEllipsis? RP
 RequiredNameList <- LP NameList RP
 ForStatement <- 'for' ForSetup MethodBlockBody
-ForSetup <- LP VarTitle Name Colon Iterable RP
+ForSetup <- LP VarTitle Name Colon Expression RP
+
 Invoke <- CallParameters / MethodCall / Index
 MethodCall <- '.' QualifiedName Invoke?
 
@@ -124,7 +125,7 @@ NestedExpr <- LP Expression RP
 MethodReference <- QualifiedName? '::' Name
 
 Value <- ValueConstruction Invoke* PostfixOps?
-ValueConstruction <- ObjConstruction / ArrayConstruction / TupleConstruction / Lambda / QualifiedName / Iterable / LiteralValue
+ValueConstruction <- ObjConstruction / ArrayConstruction / Lambda / TupleConstruction / QualifiedName / Iterable / LiteralValue
 LiteralValue <- NumLiteral / CharLiteral / StringLiteral
 Index <- LSqB Expression RSqB
 Lambda <- (SingleParamLambda / MultiparamLambda) Ellipsis? (Expression / MethodBlockBody)
