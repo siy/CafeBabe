@@ -26,9 +26,9 @@ OptionalEllipsis <- Comma Ellipsis
 CommonApiDecl <- ApiRefs? CommonApiBody
 ApiRefs <- Colon TypeNameList
 CommonApiBody <- BlockStart  Constant* ((MethodSignature Semicolon) / StaticMethodImpl / DefaultMethodImpl)* NamedClassDecl* BlockEnd
-MethodSignature <- TypeVarsDecl? (TypedFunction/UntypedFunction)
+MethodSignature <- TypeVarsDecl? (UnTypedFunction/TypedFunction)
 TypedFunction <- TypeName Name TypedArgDecl
-UntypedFunction <- 'fn' Name OptionalNameList
+UnTypedFunction <- 'fn' Name OptionalNameList
 OptionalNameList <- LP NameList? RP
 
 ClassDecl <- 'class' ClassDataDecl? ApiRefs? (ClassBlock / Semicolon)

@@ -30,5 +30,5 @@ add_custom_command(
 #add_subdirectory(test)
 #enable_testing()
 
-add_executable(cbc main.cpp cpp-peglib/peglib.h ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp)
+add_executable(cbc main.cpp cafebabe.h ast_opt.cpp cpp-peglib/peglib.h ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp ast_opt.cpp cafebabe.h parser.cpp)
 target_link_libraries(cbc ${add_link_deps})
