@@ -6,6 +6,7 @@
 //
 
 #include <set>
+#include <string>
 
 std::set<std::string> filter_safe { // NOLINT(cert-err58-cpp)
         "BlockEnd",
@@ -36,24 +37,28 @@ std::set<std::string> filter_unsafe { // NOLINT(cert-err58-cpp)
 std::set<std::string> unsafe_parents { // NOLINT(cert-err58-cpp)
         "AndType",
         "ApiRefs",
-        "LimitedTypeName",
-        "ClassFields",
         "ArrayConstruction",
-        "ExpressionList",
-        "ForSetup",
+        "ArrowDecl",
+        "ClassFields",
         "Comprehension",
         "ComprPipeline",
         "Constant",
+        "ExpressionList",
+        "ForSetup",
         "ImportList",
+        "LimitedTypeName",
         "MatchCase",
         "MethodExpression",
         "MultiparamLambda",
         "NamedAssignment",
         "NamedAssignmentList",
         "NamedRange",
+        "NameList",
         "OptionalEllipsis",
+        "OptionalNameList",
         "OrType",
         "ParallelAssignment",
+        "RequiredNameList",
         "SingleParamLambda",
         "TupleConstruction",
         "TupleDecl",
@@ -61,5 +66,6 @@ std::set<std::string> unsafe_parents { // NOLINT(cert-err58-cpp)
         "TypeArguments",
         "TypedArgList",
         "TypeNameList",
+        "UnitDecl",
         "ValueReference"
 };

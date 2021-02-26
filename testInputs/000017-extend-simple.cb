@@ -4,3 +4,7 @@ pub extend Option : toString {
         Just -> "${this.value()}";
     };
 }
+
+pub extend _ {
+    <R> R map(_ -> R mapper) = mapper(this);
+}

@@ -1,5 +1,4 @@
-# Pure PEG grammar
-
+# CafeBabe v0.1
 Program <- Use* Constant* Type* Extension* Function* Unsafe* Test* eof
 Use <- 'use' QualifiedName ImportList? Semicolon
 Constant <- Public? 'const' ('val' / TypeName) Name '=' Expression Semicolon
@@ -86,7 +85,9 @@ LimitedTypeName <- Name (Colon TypeName ('+'/'-')?)?
 TypeNameList <- TypeName (Comma TypeName)*
 TypedArgList <- TypedArgument (Comma TypedArgument)* OptionalEllipsis?
 TypedArgument <- ArgumentType Name
-ArgumentType <- TypeName (Arrow Ellipsis? TypeName)*
+ArgumentType <- UnitDecl / ArrowDecl
+UnitDecl <- '(' ')' Arrow (TypeName Arrow)* Ellipsis? TypeName
+ArrowDecl <- TypeName (Arrow (TypeName Arrow)* Ellipsis? TypeName)?
 NameList <- Name (Comma Name)*
 
 Expression <- IfExpression / SelectExpression / MatchExpression / TernaryExpression / Expr
@@ -122,7 +123,7 @@ Sum <- Product (MulOps Product)*
 Product <- (Cast / UnaryOps)* (MethodReference / Value / NestedExpr / Ellipsis)
 Cast <- LP TypeName RP
 NestedExpr <- LP Expression RP
-MethodReference <- QualifiedName? '::' Name
+MethodReference <- QualifiedName? DoubleColon Name
 
 Value <- ValueConstruction Invoke* PostfixOps?
 ValueConstruction <- ObjConstruction / ArrayConstruction / Lambda / TupleConstruction / QualifiedName / Iterable / LiteralValue
@@ -189,6 +190,7 @@ RP <- ')'
 LSqB <- '['
 RSqB <- ']'
 Colon <- ':'
+DoubleColon <- '::'
 
 %whitespace <- [ \t\r\n]* Comment?
 Comment <- '//' (!end .)* &end
