@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(CafeBabe)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(./cpp-peglib)
@@ -30,5 +30,5 @@ add_custom_command(
 #add_subdirectory(test)
 #enable_testing()
 
-add_executable(cbc main.cpp cafebabe.h ast_opt.cpp cpp-peglib/peglib.h ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp ast_opt.cpp cafebabe.h parser.cpp)
+add_executable(cbc main.cpp cafebabe.h ast_opt.cpp cpp-peglib/peglib.h ${CMAKE_CURRENT_BINARY_DIR}/grammar.cpp ast_opt.cpp cafebabe.h parser.cpp symbol_table.h)
 target_link_libraries(cbc ${add_link_deps})

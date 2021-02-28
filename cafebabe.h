@@ -6,11 +6,14 @@
 //
 
 #pragma once
+
 #include <peglib.h>
 
 // Parser API
 peg::parser load_parser(bool bench);
-std::shared_ptr<peg::Ast> parse_input(peg::parser peg, const std::string &codeText, const std::string &fileName, bool bench);
+
+std::shared_ptr<peg::Ast>
+parse_input(peg::parser peg, const std::string &codeText, const std::string &fileName, bool bench);
 
 // AST optimizer static data
 extern std::set<std::string> filter_safe;
@@ -52,6 +55,15 @@ void walk_ast(const std::shared_ptr<T> &node, std::function<void(const std::shar
 
     for (const auto &child : node->nodes) {
         walk_ast(child, fn);
+    }
+}
+
+template<typename T, typename S>
+void walk_ast(const std::shared_ptr<T> &node, const S& scope, std::function<void(const std::shared_ptr<T> &, const S&)> fn) {
+    fn(node, scope);
+
+    for (const auto &child : node->nodes) {
+        walk_ast(child, scope, fn);
     }
 }
 
