@@ -56,7 +56,6 @@ Below listed some key features:
  - Sequence comprehension
  - String interpolation
  - Named arguments
- - Duck typing
  - Data structure isomorphism
  - Structural type test
 
