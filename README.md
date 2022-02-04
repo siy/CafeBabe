@@ -370,13 +370,6 @@ Another approach is to use destructuring:
 val (head, tail) = three;
 val four = ((5), tail);
 ```
-
-## Duck Typing
-
-
-```
-```
-
 ## Data Structure Isomorphism and Structural Type Test
 
 ### Data Structure Isomorphism
